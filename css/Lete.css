@@ -148,11 +148,10 @@ a {
 }
 
 /* 鼠标图标 */
-
 body {
-    cursor: url(https://cdn.jsdelivr.net/gh/lete114/CDN@1.0/Use/Jkll8I.png), auto;
+    cursor: url(https://cdn.jsdelivr.net/gh/sviptzk/HexoStaticFile@latest/Hexo/img/default.cur),
+    default;
 }
-
 
 /*a标签*/
 
@@ -173,7 +172,6 @@ button:hover {
     margin-bottom: 2px;
     width: 30px;
     height: 30px;
-    color: var(--btn-color);
     text-align: center;
     font-size: 16px;
     cursor: url(https://cdn.jsdelivr.net/gh/lete114/CDN@1.0/Use/JkuClT.png), auto;
