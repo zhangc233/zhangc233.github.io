@@ -1,224 +1,3 @@
-/* 自定义字体 */
-@font-face {
-    font-family: 'sleek';
-    src: url('https://cdn.jsdelivr.net/gh/lete114/CDN2/zaxiang/sleek.woff2');
-}
-
-
-/* 隐藏回到顶部按钮，替换为up酱 */
-
-#go-up i {
-    display: none;
-    background-color: transparent !important;
-}
-
-#go-up {
-    background-color: transparent !important;
-}
-
-#upj {
-    transform: translate(-70px, -80px) !important;
-}
-
-/*新版3.0.0以上添加up酱置顶ico图标上移问题*/
-.fas.fa-arrow-up {
-    line-height: 2;
-}
-
-/* 目录隐藏按钮颜色 */
-
-#toggle-sidebar {
-    color: #e58a8a !important;
-}
-
-/* 版权链接去掉下划线 */
-
-.layout_post .post-copyright .post-copyright-info a {
-    text-decoration: none;
-}
-
-/* 博主昵称颜色 */
-.author-info__name {
-    color: #ff7242;
-}
-
-/* 评论框  */
-
-.vwrap {
-    box-shadow: 2px 2px 5px #bbb;
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 8px;
-    padding: 30px;
-    margin: 30px 0px 30px 0px;
-}
-
-
-/* 提交按钮 */
-
-#vcomment button {
-    padding: 0.3rem 0.8rem;
-    border-color: #fff;
-    background-color: #e58a8a;
-    color: #fff;
-    font-size: 0.7rem;
-    -webkit-transition: all 0.3s;
-    -moz-transition: all 0.3s;
-    -o-transition: all 0.3s;
-    -ms-transition: all 0.3s;
-    transition: all 0.3s;
-}
-
-
-/* 评论区代码块 */
-
-.v[data-class=v] code {
-    color: #c7254e;
-    background-color: #F9F2F4;
-}
-/* 设置评论框 */
-
-.vcard {
-    box-shadow: 2px 2px 5px #bbb;
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 8px;
-    padding: 30px;
-    margin: 30px 0px 0px 0px;
-}
-
-
-/* 取消回复聊天框 */
-
-.vquote .vcard {
-    box-shadow: 2px 2px 5px transparent;
-    background: rgba(255, 255, 255, 0.0);
-    padding: 0px;
-}
-
-/* 页脚透明 */
-
-#footer {
-    background: transparent !important;
-}
-
-/* a标签默认颜色 */
-
-#article-container a {
-    color: #00c4b6;
-    text-decoration: none;
-}
-
-/* 鼠标悬停时的颜色 */
-
-#article-container a:hover {
-    color: #e58a8a;
-    text-decoration: none;
-}
-/*a标签颜色*/
-a {
-    color: #00c4b6;
-}
-
-/* 首页中间打字效果上方 */
-#page-header #site_title {
-    color: #80bdab;
-}
-/* 顶部导航栏 */
-#nav a {
-    color: #f9f2f4;
-}
-
-/*页脚a标签字体颜色*/
-#footer-wrap a {
-    color: #00c4b6;
-}
-
-/*页脚自定义字段字体颜色*/
-/* 也就是配置文件里的footer_custom_text */
-.footer_custom_text {
-    color: #00c4b6;
-}
-
-/*移动端优化：去除归档、标签、最新文章、公告、、只保留网站统计*/
-
-@media screen and (max-width: 800px) {
-    #aside_content div:not(:last-child) {
-        display: none;
-        font-size: 13px;
-    }
-}
-
-/* 鼠标图标 */
-body {
-    cursor: url(https://cdn.jsdelivr.net/gh/sviptzk/HexoStaticFile@latest/Hexo/img/default.cur),
-    default;
-}
-
-/*a标签*/
-
-a:hover {
-    cursor: url(https://cdn.jsdelivr.net/gh/lete114/CDN@1.0/Use/JkuClT.png), auto;
-}
-
-
-/*按钮*/
-
-button:hover {
-    cursor: url(https://cdn.jsdelivr.net/gh/lete114/CDN@1.0/Use/JkuClT.png), auto;
-}
-
-#rightside>div>button,
-#rightside>div>a {
-    display: block;
-    margin-bottom: 2px;
-    width: 30px;
-    height: 30px;
-    text-align: center;
-    font-size: 16px;
-    cursor: url(https://cdn.jsdelivr.net/gh/lete114/CDN@1.0/Use/JkuClT.png), auto;
-}
-
-
-/* 打赏 */
-
-.post-reward .reward-button {
-    cursor: url(https://cdn.jsdelivr.net/gh/lete114/CDN@1.0/Use/JkuClT.png), auto;
-}
-
-
-/* 文章标签 */
-
-.layout_post .tag_share .post-meta__tags {
-    cursor: url(https://cdn.jsdelivr.net/gh/lete114/CDN@1.0/Use/JkuClT.png), auto;
-}
-
-
-/* 评论区 */
-
-.vcol * {
-    cursor: url(https://cdn.jsdelivr.net/gh/lete114/CDN@1.0/Use/JkuClT.png), auto;
-}
-
-.v[data-class=v] .vicon {
-    cursor: url(https://cdn.jsdelivr.net/gh/lete114/CDN@1.0/Use/JkuClT.png), auto;
-}
-
-.v[data-class=v] .vbtn {
-    cursor: url(https://cdn.jsdelivr.net/gh/lete114/CDN@1.0/Use/JkuClT.png), auto;
-}
-
-
-/* 回复 */
-
-.vat {
-    cursor: url(https://cdn.jsdelivr.net/gh/lete114/CDN@1.0/Use/JkuClT.png), auto;
-}
-
-
-/*i标签*/
-
-i:hover {
-    cursor: url(https://cdn.jsdelivr.net/gh/lete114/CDN@1.0/Use/JkuClT.png), auto;
-}
 
 
 /*up酱*/
@@ -227,35 +6,84 @@ i:hover {
     cursor: url(https://cdn.jsdelivr.net/gh/lete114/CDN@1.0/Use/JkuClT.png), auto;
 }
 
+/*
+1.每一个不同地方的css会空两行
+2.参考: https://www.antmoe.com/posts/a811d614/
+  https://butterfly.lete114.top/article/Butterfly-config.html
 
-/*页脚a标签*/
+*/
 
-#footer-wrap a:hover {
+/* 版权链接去掉下划线 */
+.layout_post .post-copyright .post-copyright-info a {
     text-decoration: none;
-    cursor: url(https://cdn.jsdelivr.net/gh/lete114/CDN@1.0/Use/JkuClT.png), auto;
 }
 
 
-/*分页器*/
+/* 博主昵称颜色 --也就是首页侧边栏头像下面那个昵称*/
+.author-info__name {
+    color: #BA55D3;
+}
 
-#pagination .page-number:hover {
-    cursor: url(https://cdn.jsdelivr.net/gh/lete114/CDN@1.0/Use/JkuClT.png), auto;
+
+/* 页脚透明 */
+#footer {
+    background: transparent !important;
 }
-/* 分页器的三个点(...) */
-.space {
-    color: #00c4b6;
+
+
+/* 首页中间打字效果上方 */
+#page-header #site_title {
+    color: #80bdab;
 }
+
+
+/* 顶部导航栏 */
+#nav a {
+    color: #f9f2f4;
+}
+
+
+/*页脚自定义字段字体颜色,也就是配置文件里的footer_custom_text*/
+.footer_custom_text {
+    color: #EEEEEE;
+}
+
+
+/*鼠标样式*/
+body {
+    cursor: url(https://cdn.jsdelivr.net/gh/sviptzk/HexoStaticFile@latest/Hexo/img/default.cur),
+    default;
+}
+a,
+img {
+    cursor: url(https://cdn.jsdelivr.net/gh/sviptzk/HexoStaticFile@latest/Hexo/img/pointer.cur),
+    default;
+}
+
 
 /* 滚动条 */
-
 ::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
+    width: 14px;
+    height: 14px;
+}
+
+::-webkit-scrollbar-track {
+    background-color: rgba(73, 177, 245, 0.2);
+    border-radius: 2em;
 }
 
 ::-webkit-scrollbar-thumb {
-    background-color: #e58a8a;
-    background-image: -webkit-linear-gradient( 45deg, rgba(255, 255, 255, 0.4) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.4) 50%, rgba(255, 255, 255, 0.4) 75%, transparent 75%, transparent);
+    background-color: #49b1f5;
+    background-image: -webkit-linear-gradient(
+            45deg,
+            rgba(255, 255, 255, 0.4) 25%,
+            transparent 25%,
+            transparent 50%,
+            rgba(255, 255, 255, 0.4) 50%,
+            rgba(255, 255, 255, 0.4) 75%,
+            transparent 75%,
+            transparent
+    );
     border-radius: 2em;
 }
 
@@ -265,64 +93,50 @@ i:hover {
 
 ::-moz-selection {
     color: #fff;
-    background-color: #e58a8a;
+    background-color: #49b1f5;
 }
 
-/* 打字效果渐变 */
 
-@-webkit-keyframes Gradient {
-    0% {
-        background-position: 0 50%;
-    }
-    50% {
-        background-position: 100% 50%;
-    }
-    100% {
-        background-position: 0 50%;
-    }
+/* a标签默认颜色 */
+#article-container a {
+    color: #00c4b6;
+    text-decoration: none;
 }
 
-@-moz-keyframes Gradient {
-    0% {
-        background-position: 0 50%;
-    }
-    50% {
-        background-position: 100% 50%;
-    }
-    100% {
-        background-position: 0 50%;
-    }
+
+/* 鼠标悬停时的颜色 */
+#article-container a:hover {
+    color: #e58a8a;
 }
 
-@keyframes Gradient {
-    0% {
-        background-position: 0 50%;
-    }
-    50% {
-        background-position: 100% 50%;
-    }
-    100% {
-        background-position: 0 50%;
-    }
+
+/*a标签颜色*/
+a {
+    color: #00c4b6;
 }
 
-#subtitle {
-    background: linear-gradient(-45deg, #ee7752, #ce3e75, #23a6d5, #23d5ab);
-    background-size: 400% 400%;
-    -webkit-animation: Gradient 10s ease infinite;
-    -moz-animation: Gradient 10s ease infinite;
-    animation: Gradient 10s ease infinite;
-    -o-user-select: none;
-    -ms-user-select: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    user-select: none;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
+
+/*文章顶部图透明*/
+#page-header {
+    background: transparent !important;
+}
+#page-header.post-bg:before {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: transparent !important; /*这个rgba可以自己改*/
+    content: '';
 }
 
-#subtitle:before {
-    background-color: rgba(0, 0, 0, 0);
+
+
+/* 自定义字体，暂时用不到先注释掉*/
+ @font-face {
+    font-family: 'mycustom_font';
+    src: url('https://cdn.jsdelivr.net/gh/youthlql/static/font/chun_feng_kai.ttf');
+	font-size: 16px;
 }
+
