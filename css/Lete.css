@@ -1,5 +1,4 @@
 
-
 /*up酱*/
 
 #upj:hover {
@@ -60,7 +59,9 @@ img {
     default;
 }
 
-
+span {
+    font-size: 16px;
+}
 /* 滚动条 */
 ::-webkit-scrollbar {
     width: 14px;

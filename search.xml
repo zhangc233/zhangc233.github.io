@@ -4,6 +4,19 @@
   
     
     <entry>
+      <title>Java常见数据结构以及特点</title>
+      <link href="2021/05/07/Java%E5%B8%B8%E8%A7%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%BB%A5%E5%8F%8A%E7%89%B9%E7%82%B9%E3%80%81%E4%BD%BF%E7%94%A8%E5%9C%BA%E6%99%AF/"/>
+      <url>2021/05/07/Java%E5%B8%B8%E8%A7%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%BB%A5%E5%8F%8A%E7%89%B9%E7%82%B9%E3%80%81%E4%BD%BF%E7%94%A8%E5%9C%BA%E6%99%AF/</url>
+      
+        <content type="html"><![CDATA[<h2 id="Java常见数据结构以及特点"><a href="#Java常见数据结构以及特点" class="headerlink" title="Java常见数据结构以及特点"></a>Java常见数据结构以及特点</h2><p>  Java中常见的数据结构，主要分为Collection和Map两种主要接口，程序中的数据结构是继承这些接口的数据结构类。</p><p><strong>Collection接口</strong>：</p><ol><li><p>List 接口继承：ArrayList、 Vector、 LinkedList等实现；</p></li><li><p>Set 接口继承：HashSet、LinkedHashSet、TreeSet等实现。</p><p>​          </p></li></ol><p><strong>Map接口</strong>： HashMap、SortedMap继承，LinkedHashMap、TreeMap等实现。</p><p>几个常用的类及其特点：</p><p><strong>ArrayList</strong></p><ul><li>数据结构：ArrayList底层使用的是Object数组；</li><li>存储结构：物理存储单元上连续的存储结构；</li><li>线程是否安全：线程不安全的；ArrayList是非同步的，方法没有加锁；</li><li>特点：方便查找，但是新增和删除操作的时候，是要有移动位置的操作，所以ArrayList适用于存储，查询操作比较频繁的数据存储。</li></ul><p><strong>LinkedList</strong></p><ul><li>数据结构：LinkedList底层使用的是双向循环链表数据结构；</li><li>存储方式：物理存储单元上非连续、非顺序的存储结构；</li><li>线程是否安全：线程不安全的；</li><li>特点：存储每一个元素消耗的空间要比ArrayList大，并且由于它的存储结构，导致他的查询不是很方便，需要去遍历每一个节点，然后查找该节点后继节点，不适合存储需要大量查询操作的数据存储，但插入比ArrayList方便，不需要进行换位操作，只需要改变指针前驱和后继，增删操作很快，不耗费多余资源 。</li></ul><p><strong>List总结</strong></p><ul><li>所有的List中只能容纳单个不同类型的对象组成的表，而不是Key－Value键值对。例如：[ tom,1,c ]</li><li>所有的List中可以有相同的元素，例如Vector中可以有 [ tom,koo,too,koo ]</li><li>所有的List中可以有null元素，例如[ tom,null,1 ]</li><li>基于Array的List（Vector，ArrayList）适合查询，而LinkedList 适合添加，删除操作</li></ul><p><strong>Vector</strong></p><ul><li>数据结构：Vector底层使用的是Object数组；</li><li>存储结构：物理存储单元上连续的存储结构；</li><li>线程是否安全：Vector是线程安全的，Vector类的方法都是有锁的；</li><li>特点：Vector是线程安全的，可以由多个线程访问一个Vector对象。但当一个线程访问的话，保证线程安全会消耗一定的资源，因此一个线程访问就无需考虑是否线程安全的问题，建议使用ArrayList。</li></ul><p><strong>TreeSet</strong></p><ul><li>数据结构：底层数据结构是二叉树；</li><li>线程是否安全：不保证线程安全的；</li><li>特点：有序的，并且没有重复元素。可以指定一个顺序，排序后按升序排列元素 。</li></ul><p><strong>HashSet</strong></p><ul><li>数据结构：链表和红黑树（jdk1.8以后）；</li><li>线程是否安全：不保证线程安全的；</li><li>特点：元素没有顺序(因为底层用的是HashMap，HashMap本身中的元素度没有顺序)、元素不能重复，不可随机访问包含的元素 ，只能用Iterator实现单向遍历，多次迭代访问，元素的顺序可能不同  。</li></ul><p><strong>Set总结</strong></p><ul><li>Set实现的基础是Map（HashMap）；</li><li>Set中的元素是不能重复的，如果使用add(Object obj)方法添加已经存在的对象，则会覆盖前面的对象。</li></ul><p><strong>HashMap</strong></p><ul><li>数据结构：链表和红黑树（jdk1.8以后）；</li><li>线程是否安全：非线程安全；</li><li>特点：Null可以做主键，但只能有一个，可以有多个Value为Null；适用于在Map中插入、删除和定位元素。</li></ul><p><strong>TreeMap</strong></p><ul><li>数据结构：树；</li><li>线程是否安全：非线程安全；</li><li>特点：有序的，适用于按自然顺序或自定义顺序遍历键（key）。</li></ul><p><strong>LinkedHashMap</strong></p><ul><li>数据结构：HashMap+LinkedList；</li><li>线程是否安全：非线程安全；</li><li>特点：有序、Key和Value都允许空、Key重复会覆盖、Value允许重复。</li></ul><p><strong>Java 中, 什么查询最快？</strong></p><p>根据数组下标, 查找数组的元素, 是Java中天下第一快的操作!</p><p><strong>数组和ArrayList 的区别:</strong></p><ul><li>数组可以存储数据类型一致的一组数据, 没有提供操作算法, 使用数组需要自行编写算法, 使用数组编码的专用算法,<br>性能最佳！而ArrayList也可以存储一组数据, 其内部也是数组, 还提供操作算法, 使用方便. 通用算法好处是使用方便,<br>算法是经过检验的, 非常可靠。但是如果期望高性能, 使用数组, 如期望高开发效率, 使用Arraylist。</li></ul><p><strong>Vector、ArrayList和LinkedList使用</strong> </p><p>大多数情况下，从性能上来说ArrayList最好，但是当集合内的元素需要频繁插入、删除时LinkedList会有比较好的表现，但是它们三个性能都比不上数组。所以： </p><ul><li>如果能用数组的时候(元素类型固定，数组长度固定)，请尽量使用数组来代替List；</li><li>如果没有频繁的删除插入操作，又不用考虑多线程问题，优先选择ArrayList；</li><li>如果在多线程条件下使用，可以考虑Vector；</li><li>如果需要频繁地删除插入，LinkedList就有了用武之地；</li><li>如果你什么都不知道，用ArrayList没错。</li></ul>]]></content>
+      
+      
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>Hello World</title>
       <link href="2021/04/26/hello-world/"/>
       <url>2021/04/26/hello-world/</url>
