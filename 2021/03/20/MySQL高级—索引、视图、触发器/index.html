@@ -1,0 +1,619 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MySQL高级—索引、视图、触发器 | ZC的学习录</title><meta name="keywords" content="索引、视图"><meta name="author" content="zhangc233"><meta name="copyright" content="zhangc233"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="索引索引概述索引用于快速找出在某个列中有一特定值的行。不使用索引，MySQL必须从第1条记录开始读完整个表，直到找出相关的行。表越大，查询数据所花费的时间越多。如果表中查询的列有一个索引，MySQL能快速到达某个位置去搜寻数据文件，而不必查看所有数据。 MySQL官方对索引的定义为：索引（index）是帮助MySQL高效获取数据的数据结构（有序）。在数据之外，数据库系统还维护者满足特定查找算法的数">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MySQL高级—索引、视图、触发器">
+<meta property="og:url" content="https://zhangc233.github.io/2021/03/20/MySQL%E9%AB%98%E7%BA%A7%E2%80%94%E7%B4%A2%E5%BC%95%E3%80%81%E8%A7%86%E5%9B%BE%E3%80%81%E8%A7%A6%E5%8F%91%E5%99%A8/index.html">
+<meta property="og:site_name" content="ZC的学习录">
+<meta property="og:description" content="索引索引概述索引用于快速找出在某个列中有一特定值的行。不使用索引，MySQL必须从第1条记录开始读完整个表，直到找出相关的行。表越大，查询数据所花费的时间越多。如果表中查询的列有一个索引，MySQL能快速到达某个位置去搜寻数据文件，而不必查看所有数据。 MySQL官方对索引的定义为：索引（index）是帮助MySQL高效获取数据的数据结构（有序）。在数据之外，数据库系统还维护者满足特定查找算法的数">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/zhangc233/pic@master/img/mysql%E4%BC%98%E5%8C%96.jfif">
+<meta property="article:published_time" content="2021-03-20T13:00:00.000Z">
+<meta property="article:modified_time" content="2021-08-04T12:37:52.818Z">
+<meta property="article:author" content="zhangc233">
+<meta property="article:tag" content="mysql">
+<meta property="article:tag" content="索引">
+<meta property="article:tag" content="视图">
+<meta property="article:tag" content="触发器">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/zhangc233/pic@master/img/mysql%E4%BC%98%E5%8C%96.jfif"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js"></script><script src="https://cdn.jsdelivr.net/gh/metowolf/MetingJS@1.2/dist/Meting.min.js"></script><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://zhangc233.github.io/2021/03/20/MySQL%E9%AB%98%E7%BA%A7%E2%80%94%E7%B4%A2%E5%BC%95%E3%80%81%E8%A7%86%E5%9B%BE%E3%80%81%E8%A7%A6%E5%8F%91%E5%99%A8/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//hm.baidu.com"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><meta name="yandex-verification" content="{&quot;theme_color&quot;:{&quot;enable&quot;:true,&quot;main&quot;:&quot;#49B1F5&quot;,&quot;paginator&quot;:&quot;#00c4b6&quot;,&quot;button_hover&quot;:&quot;#FF7242&quot;,&quot;text_selection&quot;:&quot;#00c4b6&quot;,&quot;link_color&quot;:&quot;#99a9bf&quot;,&quot;meta_color&quot;:&quot;#858585&quot;,&quot;hr_color&quot;:&quot;#A4D8FA&quot;,&quot;code_foreground&quot;:&quot;#F47466&quot;,&quot;code_background&quot;:&quot;rgba(27, 31, 35, .05)&quot;,&quot;toc_color&quot;:&quot;#00c4b6&quot;,&quot;blockquote_padding_color&quot;:&quot;#49b1f5&quot;,&quot;blockquote_background_color&quot;:&quot;#49b1f5&quot;}}"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><script>var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?fbe67500831b74f989430bb8dbe1e7ca";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"search.xml","languages":{"hits_empty":"找不到您查询的内容：${query}"}},
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: {"limitCount":50,"languages":{"author":"作者: zhangc233","link":"链接: ","source":"来源: ZC的学习录","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。"}},
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#121212","position":"bottom-left"},
+  source: {
+    jQuery: 'https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js',
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/js/jquery.justifiedGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/css/justifiedGallery.min.css'
+    },
+    fancybox: {
+      js: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.css'
+    }
+  },
+  isPhotoFigcaption: true,
+  islazyload: false,
+  isanchor: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = { 
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2021-08-04 20:37:52'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          if (t === 'dark') activateDarkMode()
+          else if (t === 'light') activateLightMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const fontSizeVal = saveToLocal.get('global-font-size')
+    if (fontSizeVal !== undefined) {
+      document.documentElement.style.setProperty('--global-font-size', fontSizeVal + 'px')
+    }
+    })(window)</script><link rel="stylesheet" href="/css/Lete.css"><link rel="stylesheet" href="/css/card_botui.css" /><link rel="stylesheet" href="/css/iconfont.css" /><style type="text/css">#toggle-sidebar {bottom: 80px}</style><style type="text/css">#toggle-sidebar {left:100px}</style><meta name="generator" content="Hexo 5.4.0"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><div id="web_bg"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="author-avatar"><img class="avatar-img" src="/img/avatar.jpg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data"><div class="data-item is-center"><div class="data-item-link"><a href="/archives/"><div class="headline">文章</div><div class="length-num">32</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/tags/"><div class="headline">标签</div><div class="length-num">63</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/categories/"><div class="headline">分类</div><div class="length-num">13</div></a></div></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw iconfont  icon-shouye_huaban1"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw iconfont  icon-timeAxis"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw iconfont  icon-biaoqian_huaban1"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw iconfont  icon-quanbu"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="javascript:void(0);"><i class="fa-fw iconfont icon-yinle"></i><span> 生活</span><i class="fas fa-chevron-down expand"></i></a><ul class="menus_item_child"><li><a class="site-page" href="/music/"><i class="fa-fw iconfont  icon-yinle1"></i><span> 音乐</span></a></li><li><a class="site-page" href="/gallery/"><i class="fa-fw iconfont  icon-xiangce"></i><span> 相册</span></a></li><li><a class="site-page" href="/FilmAndTV/"><i class="fa-fw iconfont  icon-wodezhuifan"></i><span> 追番</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw iconfont  icon-lianjie-tianchong"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw iconfont  icon-guanyu1"></i><span> 关于我</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://cdn.jsdelivr.net/gh/zhangc233/pic@master/img/mysql%E4%BC%98%E5%8C%96.jfif')"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">ZC的学习录</a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw iconfont  icon-shouye_huaban1"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw iconfont  icon-timeAxis"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw iconfont  icon-biaoqian_huaban1"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw iconfont  icon-quanbu"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="javascript:void(0);"><i class="fa-fw iconfont icon-yinle"></i><span> 生活</span><i class="fas fa-chevron-down expand"></i></a><ul class="menus_item_child"><li><a class="site-page" href="/music/"><i class="fa-fw iconfont  icon-yinle1"></i><span> 音乐</span></a></li><li><a class="site-page" href="/gallery/"><i class="fa-fw iconfont  icon-xiangce"></i><span> 相册</span></a></li><li><a class="site-page" href="/FilmAndTV/"><i class="fa-fw iconfont  icon-wodezhuifan"></i><span> 追番</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw iconfont  icon-lianjie-tianchong"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw iconfont  icon-guanyu1"></i><span> 关于我</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">MySQL高级—索引、视图、触发器</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2021-03-20T13:00:00.000Z" title="发表于 2021-03-20 21:00:00">2021-03-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2021-08-04T12:37:52.818Z" title="更新于 2021-08-04 20:37:52">2021-08-04</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/MySQL/">MySQL</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">字数总计:</span><span class="word-count">4.3k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>15分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h2 id="索引"><a href="#索引" class="headerlink" title="索引"></a>索引</h2><h3 id="索引概述"><a href="#索引概述" class="headerlink" title="索引概述"></a>索引概述</h3><p>索引用于快速找出在某个列中有一特定值的行。不使用索引，MySQL必须从第1条记录开始读完整个表，直到找出相关的行。表越大，查询数据所花费的时间越多。如果表中查询的列有一个索引，MySQL能快速到达某个位置去搜寻数据文件，而不必查看所有数据。</p>
+<p><strong>MySQL</strong>官方对索引的定义为：索引（index）是帮助MySQL高效获取数据的数据结构（有序）。在数据之外，数据库系统还维护者满足特定查找算法的数据结构，这些数据结构以某种方式引用（指向）数据， 这样就可以在这些数据结构上实现高级查找算法，这种数据结构就是索引。如下面的示意图所示 : </p>
+<p><img src="https://cdn.jsdelivr.net/gh/zhangc233/pic@master/img/1555902055367.png" alt="img"></p>
+<p>左边是数据表，一共有两列七条记录，最左边的是数据记录的物理地址（注意逻辑上相邻的记录在磁盘上也并不是一定物理相邻的）。为了加快Col2的查找，可以维护一个右边所示的二叉查找树，每个节点分别包含索引键值和一个指向对应数据记录物理地址的指针，这样就可以运用二叉查找快速获取到相应数据。</p>
+<p>一般来说索引本身也很大，不可能全部存储在内存中，因此索引往往以索引文件的形式存储在磁盘上。索引是数据库中用来提高性能的最常用的工具。</p>
+<h3 id="索引优势劣势"><a href="#索引优势劣势" class="headerlink" title="索引优势劣势"></a>索引优势劣势</h3><p><strong>优势</strong></p>
+<ul>
+<li><p>通过创建唯一索引，可以保证数据库表中每一行数据的唯一 性。</p>
+</li>
+<li><p>可以大大加快数据的查询速度，这也是创建索引的最主要的原因。</p>
+</li>
+<li><p>在实现数据的参考完整性方面，可以加速表和表之间的连接。</p>
+</li>
+<li><p>在使用分组和排序子句进行数据查询时，也可以显著减少查询中分组和排序的时间。</p>
+</li>
+<li><p>通过索引列对数据进行排序，降低数据排序的成本，降低CPU的消耗。</p>
+</li>
+</ul>
+<p><strong>劣势</strong></p>
+<ul>
+<li><p>创建索引和维护索引要耗费时间，并且随着数据量的增加所耗费的时间也会增加。而实际上索引也是一张表，该表中保存了主键与索引字段，并指向实体类的记录，所以索引列也是要占用空间的。</p>
+</li>
+<li><p>虽然索引大大提高了查询效率，同时却也降低更新表的速度，如对表进行INSERT、UPDATE、DELETE。因为更新表时，MySQL 不仅要保存数据，还要保存一下索引文件每次更新添加了索引列的字段，都会调整因为更新所带来的键值变化后的索引信息。</p>
+</li>
+</ul>
+<h3 id="索引结构"><a href="#索引结构" class="headerlink" title="索引结构"></a>索引结构</h3><p>索引是在MySQL的存储引擎层中实现的，而不是在服务器层实现的。所以每种存储引擎的索引都不一定完全相同，也不是所有的存储引擎都支持所有的索引类型的。MySQL目前提供了以下4种索引：</p>
+<ul>
+<li>BTREE 索引 ： 最常见的索引类型，大部分索引都支持 B 树索引。</li>
+<li>HASH 索引：只有Memory引擎支持 ， 使用场景简单 。</li>
+<li>R-tree 索引（空间索引）：空间索引是MyISAM引擎的一个特殊索引类型，主要用于地理空间数据类型，通常使用较少，不做特别介绍。</li>
+<li>Full-text （全文索引） ：全文索引也是MyISAM的一个特殊索引类型，主要用于全文索引，InnoDB从Mysql5.6版本开始支持全文索引。</li>
+</ul>
+<center><b>MyISAM、InnoDB、Memory三种存储引擎对各种索引类型的支持</b></center>
+
+<table>
+<thead>
+<tr>
+<th>索引</th>
+<th>InnoDB引擎</th>
+<th>MyISAM引擎</th>
+<th>Memory引擎</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>BTREE索引</td>
+<td>支持</td>
+<td>支持</td>
+<td>支持</td>
+</tr>
+<tr>
+<td>HASH 索引</td>
+<td>不支持</td>
+<td>不支持</td>
+<td>支持</td>
+</tr>
+<tr>
+<td>R-tree 索引</td>
+<td>不支持</td>
+<td>支持</td>
+<td>不支持</td>
+</tr>
+<tr>
+<td>Full-text</td>
+<td>5.6版本之后支持</td>
+<td>支持</td>
+<td>不支持</td>
+</tr>
+</tbody></table>
+<p>我们平常所说的索引，如果没有特别指明，都是指B+树（多路搜索树，并不一定是二叉的）结构组织的索引。其中聚集索引、复合索引、前缀索引、唯一索引默认都是使用 B+tree 索引，统称为 索引。</p>
+<h4 id="BTREE-结构"><a href="#BTREE-结构" class="headerlink" title="BTREE 结构"></a>BTREE 结构</h4><p>BTree又叫多路平衡搜索树，一颗m叉的BTree特性如下：</p>
+<ul>
+<li>树中每个节点最多包含m个孩子。</li>
+<li>除根节点与叶子节点外，每个节点至少有[ceil(m/2)]个孩子。</li>
+<li>若根节点不是叶子节点，则至少有两个孩子。</li>
+<li>所有的叶子节点都在同一层。</li>
+<li>每个非叶子节点由n个key与n+1个指针组成，其中[ceil(m/2)-1] &lt;= n &lt;= m-1 </li>
+</ul>
+<p>以5叉BTree为例，key的数量：公式推导[ceil(m/2)-1] &lt;= n &lt;= m-1。所以 2 &lt;= n &lt;=4 。当n&gt;4时，中间节点分裂到父节点，两边节点分裂。</p>
+<p>插入 C N G A H E K Q M F W L T Z D P R X Y S 数据为例。</p>
+<p><strong>演变过程如下：</strong></p>
+<p>1). 插入前4个字母 C N G A </p>
+<p><img src="https://cdn.jsdelivr.net/gh/zhangc233/pic@master/img/image-20210509150725663.png" alt="image-20210509150725663"></p>
+<p>2). 插入H，n&gt;4，中间元素G字母向上分裂到新的节点</p>
+<p><img src="https://cdn.jsdelivr.net/gh/zhangc233/pic@master/img/image-20210509151445248.png" alt="image-20210509151445248"></p>
+<p>3). 插入E，K，Q不需要分裂</p>
+<p><img src="https://cdn.jsdelivr.net/gh/zhangc233/pic@master/img/image-20210509151405735.png" alt="image-20210509151405735"></p>
+<p>4). 插入M，中间元素M字母向上分裂到父节点G</p>
+<p><img src="https://cdn.jsdelivr.net/gh/zhangc233/pic@master/img/image-20210509151524511.png" alt="image-20210509151524511"></p>
+<p>5). 插入F，W，L，T不需要分裂</p>
+<p><img src="https://cdn.jsdelivr.net/gh/zhangc233/pic@master/img/image-20210509151610632.png" alt="image-20210509151610632"></p>
+<p>6). 插入Z，中间元素T向上分裂到父节点中 </p>
+<p><img src="https://cdn.jsdelivr.net/gh/zhangc233/pic@master/img/image-20210509151637065.png" alt="image-20210509151637065"></p>
+<p>7). 插入D，中间元素D向上分裂到父节点中。然后插入P，R，X，Y不需要分裂</p>
+<p><img src="https://cdn.jsdelivr.net/gh/zhangc233/pic@master/img/image-20210509151704163.png" alt="image-20210509151704163"></p>
+<p>8). 最后插入S，NPQR节点n&gt;5，中间节点Q向上分裂，但分裂后父节点DGMT的n&gt;5，中间节点M向上分裂</p>
+<p><img src="https://cdn.jsdelivr.net/gh/zhangc233/pic@master/img/image-20210509151732707.png" alt="image-20210509151732707"></p>
+<p>到此，该BTREE树就已经构建完成了， BTREE树和二叉树 相比， 查询数据的效率更高， 因为对于相同的数据量来说，BTREE的层级结构比二叉树小，因此搜索速度快。</p>
+<h4 id="B-TREE-结构"><a href="#B-TREE-结构" class="headerlink" title="B+TREE 结构"></a>B+TREE 结构</h4><p>B+Tree为BTree的变种，B+Tree与BTree的区别为：</p>
+<ol>
+<li><p> n叉B+Tree最多含有n个key，而BTree最多含有n-1个key。</p>
+</li>
+<li><p>B+Tree的叶子节点保存所有的key信息，依key大小顺序排列。</p>
+</li>
+<li><p>所有的非叶子节点都可以看作是key的索引部分。</p>
+</li>
+</ol>
+<p><img src="https://cdn.jsdelivr.net/gh/zhangc233/pic@master/img/image-20210509152053832.png" alt="image-20210509152053832"></p>
+<p>由于B+Tree只有叶子节点保存key信息，查询任何key都要从root走到叶子。所以B+Tree的查询效率更加稳定。</p>
+<h4 id="MySQL中的B-Tree"><a href="#MySQL中的B-Tree" class="headerlink" title="MySQL中的B+Tree"></a>MySQL中的B+Tree</h4><p>MySQL索引数据结构对经典的B+Tree进行了优化。在原B+Tree的基础上，增加一个指向相邻叶子节点的链表指针，就形成了带有顺序指针的B+Tree，提高区间访问的性能。</p>
+<p>MySQL中的 B+Tree 索引结构示意图: </p>
+<p><img src="https://cdn.jsdelivr.net/gh/zhangc233/pic@master/img/image-20210509152148351.png" alt="image-20210509152148351"></p>
+<h3 id="索引分类"><a href="#索引分类" class="headerlink" title="索引分类"></a>索引分类</h3><ol>
+<li><p>单值索引 ：即一个索引只包含单个列，一个表可以有多个单列索引。</p>
+</li>
+<li><p>唯一索引 ：索引列的值必须唯一，但允许有空值。</p>
+</li>
+<li><p>复合索引 ：即一个索引包含多个列。</p>
+</li>
+<li><p>全文索引：在定义索引的列上支持值的全文查找，允许在这些索引列插入重复值和空值。</p>
+</li>
+</ol>
+<h3 id="索引语法"><a href="#索引语法" class="headerlink" title="索引语法"></a>索引语法</h3><p>索引在创建表的时候，可以同时创建， 也可以随时增加新的索引。</p>
+<p>准备环境:</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">create</span> database demo_01 <span class="keyword">default</span> charset<span class="operator">=</span>utf8mb4;</span><br><span class="line"></span><br><span class="line">use demo_01;</span><br><span class="line"></span><br><span class="line"><span class="keyword">CREATE</span> <span class="keyword">TABLE</span> `city` (</span><br><span class="line">  `city_id` <span class="type">int</span>(<span class="number">11</span>) <span class="keyword">NOT</span> <span class="keyword">NULL</span> AUTO_INCREMENT,</span><br><span class="line">  `city_name` <span class="type">varchar</span>(<span class="number">50</span>) <span class="keyword">NOT</span> <span class="keyword">NULL</span>,</span><br><span class="line">  `country_id` <span class="type">int</span>(<span class="number">11</span>) <span class="keyword">NOT</span> <span class="keyword">NULL</span>,</span><br><span class="line">  <span class="keyword">PRIMARY</span> KEY (`city_id`)</span><br><span class="line">) ENGINE<span class="operator">=</span>InnoDB <span class="keyword">DEFAULT</span> CHARSET<span class="operator">=</span>utf8;</span><br><span class="line"></span><br><span class="line"><span class="keyword">CREATE</span> <span class="keyword">TABLE</span> `country` (</span><br><span class="line">  `country_id` <span class="type">int</span>(<span class="number">11</span>) <span class="keyword">NOT</span> <span class="keyword">NULL</span> AUTO_INCREMENT,</span><br><span class="line">  `country_name` <span class="type">varchar</span>(<span class="number">100</span>) <span class="keyword">NOT</span> <span class="keyword">NULL</span>,</span><br><span class="line">  <span class="keyword">PRIMARY</span> KEY (`country_id`)</span><br><span class="line">) ENGINE<span class="operator">=</span>InnoDB <span class="keyword">DEFAULT</span> CHARSET<span class="operator">=</span>utf8;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">insert</span> <span class="keyword">into</span> `city` (`city_id`, `city_name`, `country_id`) <span class="keyword">values</span>(<span class="number">1</span>,<span class="string">&#x27;西安&#x27;</span>,<span class="number">1</span>);</span><br><span class="line"><span class="keyword">insert</span> <span class="keyword">into</span> `city` (`city_id`, `city_name`, `country_id`) <span class="keyword">values</span>(<span class="number">2</span>,<span class="string">&#x27;上海&#x27;</span>,<span class="number">2</span>);</span><br><span class="line"><span class="keyword">insert</span> <span class="keyword">into</span> `city` (`city_id`, `city_name`, `country_id`) <span class="keyword">values</span>(<span class="number">3</span>,<span class="string">&#x27;北京&#x27;</span>,<span class="number">1</span>);</span><br><span class="line"><span class="keyword">insert</span> <span class="keyword">into</span> `city` (`city_id`, `city_name`, `country_id`) <span class="keyword">values</span>(<span class="number">4</span>,<span class="string">&#x27;上海&#x27;</span>,<span class="number">1</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">insert</span> <span class="keyword">into</span> `country` (`country_id`, `country_name`) <span class="keyword">values</span>(<span class="number">1</span>,<span class="string">&#x27;China&#x27;</span>);</span><br><span class="line"><span class="keyword">insert</span> <span class="keyword">into</span> `country` (`country_id`, `country_name`) <span class="keyword">values</span>(<span class="number">2</span>,<span class="string">&#x27;America&#x27;</span>);</span><br><span class="line"><span class="keyword">insert</span> <span class="keyword">into</span> `country` (`country_id`, `country_name`) <span class="keyword">values</span>(<span class="number">3</span>,<span class="string">&#x27;Japan&#x27;</span>);</span><br><span class="line"><span class="keyword">insert</span> <span class="keyword">into</span> `country` (`country_id`, `country_name`) <span class="keyword">values</span>(<span class="number">4</span>,<span class="string">&#x27;UK&#x27;</span>);</span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="创建索引"><a href="#创建索引" class="headerlink" title="创建索引"></a>创建索引</h4><p>语法 ：     </p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">CREATE</span> 	[<span class="keyword">UNIQUE</span><span class="operator">|</span>FULLTEXT<span class="operator">|</span>SPATIAL]  INDEX index_name </span><br><span class="line">[<span class="keyword">USING</span>  index_type]</span><br><span class="line"><span class="keyword">ON</span> tbl_name(index_col_name,...)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">index_col_name : column_name[(length)][<span class="keyword">ASC</span> <span class="operator">|</span> <span class="keyword">DESC</span>]</span><br></pre></td></tr></table></figure>
+
+<p>示例 ： 为city表中的city_name字段创建索引 ；</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">mysql<span class="operator">&gt;</span> <span class="keyword">create</span> index idx_city_name <span class="keyword">on</span> city(city_name);</span><br><span class="line">Query OK, <span class="number">0</span> <span class="keyword">rows</span> affected (<span class="number">0.07</span> sec)</span><br><span class="line">Records: <span class="number">0</span>  Duplicates: <span class="number">0</span>  Warnings: <span class="number">0</span></span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="查看索引"><a href="#查看索引" class="headerlink" title="查看索引"></a>查看索引</h4><p>语法： </p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">show</span> index  <span class="keyword">from</span>  table_name;</span><br></pre></td></tr></table></figure>
+
+<p>示例：查看city表中的索引信息；</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">mysql<span class="operator">&gt;</span> <span class="keyword">show</span> index <span class="keyword">from</span> city;</span><br><span class="line"><span class="operator">+</span><span class="comment">-------+------------+---------------+--------------+-------------+-----------+-------------+----------+--------+------+------------+---------+---------------+</span></span><br><span class="line"><span class="operator">|</span> <span class="keyword">Table</span> <span class="operator">|</span> Non_unique <span class="operator">|</span> Key_name      <span class="operator">|</span> Seq_in_index <span class="operator">|</span> Column_name <span class="operator">|</span> <span class="keyword">Collation</span> <span class="operator">|</span> <span class="keyword">Cardinality</span> <span class="operator">|</span> Sub_part <span class="operator">|</span> Packed <span class="operator">|</span> <span class="keyword">Null</span> <span class="operator">|</span> Index_type <span class="operator">|</span> Comment <span class="operator">|</span> Index_comment <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">-------+------------+---------------+--------------+-------------+-----------+-------------+----------+--------+------+------------+---------+---------------+</span></span><br><span class="line"><span class="operator">|</span> city  <span class="operator">|</span>          <span class="number">0</span> <span class="operator">|</span> <span class="keyword">PRIMARY</span>       <span class="operator">|</span>            <span class="number">1</span> <span class="operator">|</span> city_id     <span class="operator">|</span> A         <span class="operator">|</span>           <span class="number">4</span> <span class="operator">|</span> <span class="keyword">NULL</span>     <span class="operator">|</span> <span class="keyword">NULL</span>   <span class="operator">|</span>      <span class="operator">|</span> BTREE      <span class="operator">|</span>         <span class="operator">|</span>               <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span> city  <span class="operator">|</span>          <span class="number">1</span> <span class="operator">|</span> idx_city_name <span class="operator">|</span>            <span class="number">1</span> <span class="operator">|</span> city_name   <span class="operator">|</span> A         <span class="operator">|</span>           <span class="number">3</span> <span class="operator">|</span> <span class="keyword">NULL</span>     <span class="operator">|</span> <span class="keyword">NULL</span>   <span class="operator">|</span>      <span class="operator">|</span> BTREE      <span class="operator">|</span>         <span class="operator">|</span>               <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">-------+------------+---------------+--------------+-------------+-----------+-------------+----------+--------+------+------------+---------+---------------+</span></span><br><span class="line"><span class="number">2</span> <span class="keyword">rows</span> <span class="keyword">in</span> <span class="keyword">set</span> (<span class="number">0.14</span> sec)</span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="删除索引"><a href="#删除索引" class="headerlink" title="删除索引"></a>删除索引</h4><p>语法 ：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">DROP</span>  INDEX  index_name  <span class="keyword">ON</span>  tbl_name;</span><br></pre></td></tr></table></figure>
+
+<p>示例 ： 想要删除city表上的索引idx_city_name，可以操作如下：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">mysql<span class="operator">&gt;</span> <span class="keyword">drop</span> index idx_city_name <span class="keyword">on</span> city;</span><br><span class="line">Query OK, <span class="number">0</span> <span class="keyword">rows</span> affected (<span class="number">0.05</span> sec)</span><br><span class="line">Records: <span class="number">0</span>  Duplicates: <span class="number">0</span>  Warnings: <span class="number">0</span></span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="ALTER命令"><a href="#ALTER命令" class="headerlink" title="ALTER命令"></a>ALTER命令</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">1</span>) <span class="keyword">alter</span>  <span class="keyword">table</span>  tb_name  <span class="keyword">add</span>  <span class="keyword">primary</span>  key(column_list); </span><br><span class="line"></span><br><span class="line">	该语句添加一个主键，这意味着索引值必须是唯一的，且不能为<span class="keyword">NULL</span></span><br><span class="line">	</span><br><span class="line"><span class="number">2</span>) <span class="keyword">alter</span>  <span class="keyword">table</span>  tb_name  <span class="keyword">add</span>  <span class="keyword">unique</span> index_name(column_list);</span><br><span class="line">	</span><br><span class="line">	这条语句创建索引的值必须是唯一的（除了<span class="keyword">NULL</span>外，<span class="keyword">NULL</span>可能会出现多次）</span><br><span class="line">	</span><br><span class="line"><span class="number">3</span>) <span class="keyword">alter</span>  <span class="keyword">table</span>  tb_name  <span class="keyword">add</span>  index index_name(column_list);</span><br><span class="line"></span><br><span class="line">	添加普通索引， 索引值可以出现多次。</span><br><span class="line">	</span><br><span class="line"><span class="number">4</span>) <span class="keyword">alter</span>  <span class="keyword">table</span>  tb_name  <span class="keyword">add</span>  fulltext  index_name(column_list);</span><br><span class="line">	</span><br><span class="line">	该语句指定了索引为FULLTEXT， 用于全文索引</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="索引设计原则"><a href="#索引设计原则" class="headerlink" title="索引设计原则"></a>索引设计原则</h3><p>​    索引的设计可以遵循一些已有的原则，创建索引的时候请尽量考虑符合这些原则，便于提升索引的使用效率，更高效的使用索引。</p>
+<ul>
+<li><p>对查询频次较高，且数据量比较大的表建立索引。</p>
+</li>
+<li><p>索引字段的选择，最佳候选列应当从where子句的条件中提取，如果where子句中的组合比较多，那么应当挑选最常用、过滤效果最好的列的组合。</p>
+</li>
+<li><p>使用唯一索引，区分度越高，使用索引的效率越高。</p>
+</li>
+<li><p>索引可以有效的提升查询数据的效率，但索引数量不是多多益善，索引越多，维护索引的代价自然也就水涨船高。对于插入、更新、删除等DML操作比较频繁的表来说，索引过多，会引入相当高的维护代价，降低DML操作的效率，增加相应操作的时间消耗。另外索引过多的话，MySQL也会犯选择困难病，虽然最终仍然会找到一个可用的索引，但无疑提高了选择的代价。</p>
+</li>
+<li><p>使用短索引，索引创建之后也是使用硬盘来存储的，因此提升索引访问的I/O效率，也可以提升总体的访问效率。假如构成索引的字段总长度比较短，那么在给定大小的存储块内可以存储更多的索引值，相应的可以有效的提升MySQL访问索引的I/O效率。</p>
+</li>
+<li><p>利用最左前缀，N个列组合而成的组合索引，那么相当于是创建了N个索引，如果查询时where子句中使用了组成该索引的前几个字段，那么这条查询SQL可以利用组合索引来提升查询效率。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">创建复合索引:</span><br><span class="line"></span><br><span class="line">	<span class="keyword">CREATE</span> INDEX idx_name_email_status <span class="keyword">ON</span> tb_seller(NAME,email,STATUS);</span><br><span class="line"></span><br><span class="line">就相当于</span><br><span class="line">	对name 创建索引 ;</span><br><span class="line">	对name , email 创建了索引 ;</span><br><span class="line">	对name , email, status 创建了索引 ;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h2 id="视图"><a href="#视图" class="headerlink" title="视图"></a>视图</h2><h3 id="视图概述"><a href="#视图概述" class="headerlink" title="视图概述"></a>视图概述</h3><p>视图（View）是一种虚拟存在的表。视图并不在数据库中实际存在，行和列数据来自定义视图的查询中使用的表，并且是在使用视图时动态生成的。通俗的讲，视图就是一条SELECT语句执行后返回的结果集。所以我们在创建视图的时候，主要的工作就落在创建这条SQL查询语句上。</p>
+<p>视图相对于普通的表的优势主要包括以下几项。</p>
+<ul>
+<li>简单：使用视图的用户完全不需要关心后面对应的表的结构、关联条件和筛选条件，对用户来说已经是过滤好的复合条件的结果集。</li>
+<li>安全：使用视图的用户只能访问他们被允许查询的结果集，对表的权限管理并不能限制到某个行某个列，但是通过视图就可以简单的实现。</li>
+<li>数据独立：一旦视图的结构确定了，可以屏蔽表结构变化对用户的影响，源表增加列对视图没有影响；源表修改列名，则可以通过修改视图来解决，不会造成对访问者的影响。</li>
+</ul>
+<h3 id="创建或者修改视图"><a href="#创建或者修改视图" class="headerlink" title="创建或者修改视图"></a>创建或者修改视图</h3><p>创建视图的语法为：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">CREATE [OR REPLACE] [ALGORITHM = &#123;UNDEFINED | MERGE | TEMPTABLE&#125;]</span><br><span class="line"></span><br><span class="line"><span class="keyword">VIEW</span> view_name [(column_list)]</span><br><span class="line"></span><br><span class="line"><span class="keyword">AS</span> select_statement</span><br><span class="line"></span><br><span class="line">[<span class="keyword">WITH</span> [<span class="keyword">CASCADED</span> <span class="operator">|</span> <span class="keyword">LOCAL</span>] <span class="keyword">CHECK</span> OPTION]</span><br></pre></td></tr></table></figure>
+
+<p>修改视图的语法为：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">ALTER [ALGORITHM = &#123;UNDEFINED | MERGE | TEMPTABLE&#125;]</span><br><span class="line"></span><br><span class="line"><span class="keyword">VIEW</span> view_name [(column_list)]</span><br><span class="line"></span><br><span class="line"><span class="keyword">AS</span> select_statement</span><br><span class="line"></span><br><span class="line">[<span class="keyword">WITH</span> [<span class="keyword">CASCADED</span> <span class="operator">|</span> <span class="keyword">LOCAL</span>] <span class="keyword">CHECK</span> OPTION]</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">选项 : </span><br><span class="line">	<span class="keyword">WITH</span> [<span class="keyword">CASCADED</span> <span class="operator">|</span> <span class="keyword">LOCAL</span>] <span class="keyword">CHECK</span> OPTION 决定了是否允许更新数据使记录不再满足视图的条件。</span><br><span class="line">	</span><br><span class="line">	<span class="keyword">LOCAL</span> ： 只要满足本视图的条件就可以更新。</span><br><span class="line">	<span class="keyword">CASCADED</span> ： 必须满足所有针对该视图的所有视图的条件才可以更新。 默认值.</span><br></pre></td></tr></table></figure>
+
+<p>示例 , 创建city_country_view视图 , 执行如下SQL : </p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">create</span> <span class="keyword">or</span> replace <span class="keyword">view</span> city_country_view </span><br><span class="line"><span class="keyword">as</span> </span><br><span class="line"><span class="keyword">select</span> t.<span class="operator">*</span>,c.country_name <span class="keyword">from</span> country c , city t <span class="keyword">where</span> c.country_id <span class="operator">=</span> t.country_id;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>查询视图 : </p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">mysql<span class="operator">&gt;</span>  <span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> city_country_view;</span><br><span class="line"><span class="operator">+</span><span class="comment">---------+-----------+------------+--------------+</span></span><br><span class="line"><span class="operator">|</span> city_id <span class="operator">|</span> city_name <span class="operator">|</span> country_id <span class="operator">|</span> country_name <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">---------+-----------+------------+--------------+</span></span><br><span class="line"><span class="operator">|</span>       <span class="number">1</span> <span class="operator">|</span> 西安      <span class="operator">|</span>          <span class="number">1</span> <span class="operator">|</span> China        <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span>       <span class="number">3</span> <span class="operator">|</span> 北京      <span class="operator">|</span>          <span class="number">1</span> <span class="operator">|</span> China        <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span>       <span class="number">4</span> <span class="operator">|</span> 上海      <span class="operator">|</span>          <span class="number">1</span> <span class="operator">|</span> China        <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span>       <span class="number">2</span> <span class="operator">|</span> 上海      <span class="operator">|</span>          <span class="number">2</span> <span class="operator">|</span> America      <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">---------+-----------+------------+--------------+</span></span><br><span class="line"><span class="number">4</span> <span class="keyword">rows</span> <span class="keyword">in</span> <span class="keyword">set</span> (<span class="number">0.17</span> sec)</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="查看视图"><a href="#查看视图" class="headerlink" title="查看视图"></a>查看视图</h3><p>从 MySQL 5.1 版本开始，使用 SHOW TABLES 命令的时候不仅显示表的名字，同时也会显示视图的名字，而不存在单独显示视图的 SHOW VIEWS 命令。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">mysql<span class="operator">&gt;</span> <span class="keyword">show</span> tables;</span><br><span class="line"><span class="operator">+</span><span class="comment">-------------------+</span></span><br><span class="line"><span class="operator">|</span> Tables_in_test    <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">-------------------+</span></span><br><span class="line"><span class="operator">|</span> accout            <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span> book              <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span> books             <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span> city              <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span> city_country_view <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span> country           <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span> customers         <span class="operator">|</span></span><br></pre></td></tr></table></figure>
+
+<p>同样，在使用 SHOW TABLE STATUS 命令的时候，不但可以显示表的信息，同时也可以显示视图的信息。    </p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">mysql<span class="operator">&gt;</span> <span class="keyword">show</span> <span class="keyword">table</span> status;</span><br><span class="line"> Name              <span class="operator">|</span> Engine <span class="operator">|</span> Version <span class="operator">|</span> Row_format <span class="operator">|</span> <span class="keyword">Rows</span> <span class="operator">|</span> Avg_row_length <span class="operator">|</span> Data_length <span class="operator">|</span> Max_data_length <span class="operator">|</span> Index_length <span class="operator">|</span> Data_free <span class="operator">|</span> Auto_increment <span class="operator">|</span> Create_time         <span class="operator">|</span> Update_time         <span class="operator">|</span> Check_time <span class="operator">|</span> <span class="keyword">Collation</span>       <span class="operator">|</span> Checksum <span class="operator">|</span> Create_options <span class="operator">|</span> Comment <span class="operator">|</span></span><br><span class="line"> </span><br><span class="line"> city_country_view <span class="operator">|</span> <span class="keyword">NULL</span>   <span class="operator">|</span> <span class="keyword">NULL</span>    <span class="operator">|</span> <span class="keyword">NULL</span>       <span class="operator">|</span> <span class="keyword">NULL</span> <span class="operator">|</span> <span class="keyword">NULL</span>           <span class="operator">|</span> <span class="keyword">NULL</span>        <span class="operator">|</span> <span class="keyword">NULL</span>            <span class="operator">|</span> <span class="keyword">NULL</span>         <span class="operator">|</span> <span class="keyword">NULL</span>      <span class="operator">|</span> <span class="keyword">NULL</span>   </span><br></pre></td></tr></table></figure>
+
+<p>如果需要查询某个视图的定义，可以使用 SHOW CREATE VIEW 命令进行查看 ： </p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">mysql<span class="operator">&gt;</span> <span class="keyword">show</span> <span class="keyword">create</span> <span class="keyword">view</span> city_country_view;;</span><br><span class="line"></span><br><span class="line"><span class="operator">|</span> <span class="keyword">View</span>              <span class="operator">|</span> <span class="keyword">Create</span> <span class="keyword">View</span>                                                                                                                                                                                                                                                                                                                    <span class="operator">|</span> character_set_client <span class="operator">|</span> collation_connection <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">-------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+----------------------+----------------------+</span></span><br><span class="line"><span class="operator">|</span> city_country_view <span class="operator">|</span> <span class="keyword">CREATE</span> ALGORITHM<span class="operator">=</span>UNDEFINED DEFINER<span class="operator">=</span>`root`@`localhost` <span class="keyword">SQL</span> SECURITY DEFINER <span class="keyword">VIEW</span> `city_country_view` <span class="keyword">AS</span> <span class="keyword">select</span> `t`.`city_id` <span class="keyword">AS</span> `city_id`,`t`.`city_name` <span class="keyword">AS</span> `city_name`,`t`.`country_id` <span class="keyword">AS</span> `country_id`,`c`.`country_name` <span class="keyword">AS</span> `country_name` <span class="keyword">from</span> (`country` `c` <span class="keyword">join</span> `city` `t`) <span class="keyword">where</span> (`c`.`country_id` <span class="operator">=</span> `t`.`country_id`) <span class="operator">|</span> utf8mb4              <span class="operator">|</span> utf8mb4_general_ci   <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">-------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+----------------------+----------------------+</span></span><br><span class="line"><span class="number">1</span> <span class="type">row</span> <span class="keyword">in</span> <span class="keyword">set</span> (<span class="number">0.15</span> sec)</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="删除视图"><a href="#删除视图" class="headerlink" title="删除视图"></a>删除视图</h3><p>语法 : </p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">DROP</span> <span class="keyword">VIEW</span> [IF <span class="keyword">EXISTS</span>] view_name [, view_name] ...[RESTRICT <span class="operator">|</span> CASCADE]	;</span><br></pre></td></tr></table></figure>
+
+<p>示例 , 删除视图city_country_view :</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">DROP</span> <span class="keyword">VIEW</span> city_country_view ;</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="触发器"><a href="#触发器" class="headerlink" title="触发器"></a>触发器</h2><h3 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h3><p>触发器是与表有关的数据库对象，指在 insert/update/delete 之前或之后，触发并执行触发器中定义的SQL语句集合。触发器的这种特性可以协助应用在数据库端确保数据的完整性 , 日志记录 , 数据校验等操作 。</p>
+<p>使用别名 OLD 和 NEW 来引用触发器中发生变化的记录内容，这与其他的数据库是相似的。现在触发器还只支持行级触发，不支持语句级触发。</p>
+<table>
+<thead>
+<tr>
+<th>触发器类型</th>
+<th>NEW 和 OLD的使用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>INSERT 型触发器</td>
+<td>NEW 表示将要或者已经新增的数据</td>
+</tr>
+<tr>
+<td>UPDATE 型触发器</td>
+<td>OLD 表示修改之前的数据 , NEW 表示将要或已经修改后的数据</td>
+</tr>
+<tr>
+<td>DELETE 型触发器</td>
+<td>OLD 表示将要或者已经删除的数据</td>
+</tr>
+</tbody></table>
+<h3 id="创建触发器"><a href="#创建触发器" class="headerlink" title="创建触发器"></a>创建触发器</h3><p>语法结构 : </p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">create</span> <span class="keyword">trigger</span> trigger_name </span><br><span class="line"></span><br><span class="line">before<span class="operator">/</span>after <span class="keyword">insert</span><span class="operator">/</span>update<span class="operator">/</span><span class="keyword">delete</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">on</span> tbl_name </span><br><span class="line"></span><br><span class="line">[ <span class="keyword">for</span> <span class="keyword">each</span> <span class="type">row</span> ]  <span class="comment">-- 行级触发器</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">begin</span></span><br><span class="line"></span><br><span class="line">	trigger_stmt ;</span><br><span class="line"></span><br><span class="line"><span class="keyword">end</span>;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>示例需求:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">通过触发器记录 emp 表的数据变更日志 , 包含增加, 修改 , 删除 ;</span><br></pre></td></tr></table></figure>
+
+<p>首先创建一张日志表 : </p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">create</span> <span class="keyword">table</span> emp_logs(</span><br><span class="line">  id <span class="type">int</span>(<span class="number">11</span>) <span class="keyword">not</span> <span class="keyword">null</span> auto_increment,</span><br><span class="line">  operation <span class="type">varchar</span>(<span class="number">20</span>) <span class="keyword">not</span> <span class="keyword">null</span> comment <span class="string">&#x27;操作类型, insert/update/delete&#x27;</span>,</span><br><span class="line">  operate_time datetime <span class="keyword">not</span> <span class="keyword">null</span> comment <span class="string">&#x27;操作时间&#x27;</span>,</span><br><span class="line">  operate_id <span class="type">int</span>(<span class="number">11</span>) <span class="keyword">not</span> <span class="keyword">null</span> comment <span class="string">&#x27;操作表的ID&#x27;</span>,</span><br><span class="line">  operate_params <span class="type">varchar</span>(<span class="number">500</span>) comment <span class="string">&#x27;操作参数&#x27;</span>,</span><br><span class="line">  <span class="keyword">primary</span> key(`id`)</span><br><span class="line">)engine<span class="operator">=</span>innodb <span class="keyword">default</span> charset<span class="operator">=</span>utf8;</span><br></pre></td></tr></table></figure>
+
+<p>创建 insert 型触发器，完成插入数据时的日志记录 : </p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">DELIMITER $</span><br><span class="line"></span><br><span class="line"><span class="keyword">create</span> <span class="keyword">trigger</span> emp_logs_insert_trigger</span><br><span class="line">after <span class="keyword">insert</span> </span><br><span class="line"><span class="keyword">on</span> emp </span><br><span class="line"><span class="keyword">for</span> <span class="keyword">each</span> <span class="type">row</span> </span><br><span class="line"><span class="keyword">begin</span></span><br><span class="line">  <span class="keyword">insert</span> <span class="keyword">into</span> emp_logs (id,operation,operate_time,operate_id,operate_params) <span class="keyword">values</span>(<span class="keyword">null</span>,<span class="string">&#x27;insert&#x27;</span>,now(),new.id,concat(<span class="string">&#x27;插入后(id:&#x27;</span>,new.id,<span class="string">&#x27;, name:&#x27;</span>,new.name,<span class="string">&#x27;, age:&#x27;</span>,new.age,<span class="string">&#x27;, salary:&#x27;</span>,new.salary,<span class="string">&#x27;)&#x27;</span>));	</span><br><span class="line"><span class="keyword">end</span> $</span><br><span class="line"></span><br><span class="line">DELIMITER ;</span><br></pre></td></tr></table></figure>
+
+<p>创建 update 型触发器，完成更新数据时的日志记录 : </p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">DELIMITER $</span><br><span class="line"></span><br><span class="line"><span class="keyword">create</span> <span class="keyword">trigger</span> emp_logs_update_trigger</span><br><span class="line">after update </span><br><span class="line"><span class="keyword">on</span> emp </span><br><span class="line"><span class="keyword">for</span> <span class="keyword">each</span> <span class="type">row</span> </span><br><span class="line"><span class="keyword">begin</span></span><br><span class="line">  <span class="keyword">insert</span> <span class="keyword">into</span> emp_logs (id,operation,operate_time,operate_id,operate_params) <span class="keyword">values</span>(<span class="keyword">null</span>,<span class="string">&#x27;update&#x27;</span>,now(),new.id,concat(<span class="string">&#x27;修改前(id:&#x27;</span>,old.id,<span class="string">&#x27;, name:&#x27;</span>,old.name,<span class="string">&#x27;, age:&#x27;</span>,old.age,<span class="string">&#x27;, salary:&#x27;</span>,old.salary,<span class="string">&#x27;) , 修改后(id&#x27;</span>,new.id, <span class="string">&#x27;name:&#x27;</span>,new.name,<span class="string">&#x27;, age:&#x27;</span>,new.age,<span class="string">&#x27;, salary:&#x27;</span>,new.salary,<span class="string">&#x27;)&#x27;</span>));                                                                      </span><br><span class="line"><span class="keyword">end</span> $</span><br><span class="line"></span><br><span class="line">DELIMITER ;</span><br></pre></td></tr></table></figure>
+
+<p>创建delete 行的触发器 , 完成删除数据时的日志记录 : </p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">DELIMITER $</span><br><span class="line"></span><br><span class="line"><span class="keyword">create</span> <span class="keyword">trigger</span> emp_logs_delete_trigger</span><br><span class="line">after <span class="keyword">delete</span> </span><br><span class="line"><span class="keyword">on</span> emp </span><br><span class="line"><span class="keyword">for</span> <span class="keyword">each</span> <span class="type">row</span> </span><br><span class="line"><span class="keyword">begin</span></span><br><span class="line">  <span class="keyword">insert</span> <span class="keyword">into</span> emp_logs (id,operation,operate_time,operate_id,operate_params) <span class="keyword">values</span>(<span class="keyword">null</span>,<span class="string">&#x27;delete&#x27;</span>,now(),old.id,concat(<span class="string">&#x27;删除前(id:&#x27;</span>,old.id,<span class="string">&#x27;, name:&#x27;</span>,old.name,<span class="string">&#x27;, age:&#x27;</span>,old.age,<span class="string">&#x27;, salary:&#x27;</span>,old.salary,<span class="string">&#x27;)&#x27;</span>));                                                                      </span><br><span class="line"><span class="keyword">end</span> $</span><br><span class="line"></span><br><span class="line">DELIMITER ;</span><br></pre></td></tr></table></figure>
+
+<p>测试：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">insert</span> <span class="keyword">into</span> emp(id,name,age,salary) <span class="keyword">values</span>(<span class="keyword">null</span>, <span class="string">&#x27;光明左使&#x27;</span>,<span class="number">30</span>,<span class="number">3500</span>);</span><br><span class="line"><span class="keyword">insert</span> <span class="keyword">into</span> emp(id,name,age,salary) <span class="keyword">values</span>(<span class="keyword">null</span>, <span class="string">&#x27;光明右使&#x27;</span>,<span class="number">33</span>,<span class="number">3200</span>);</span><br><span class="line"></span><br><span class="line">update emp <span class="keyword">set</span> age <span class="operator">=</span> <span class="number">39</span> <span class="keyword">where</span> id <span class="operator">=</span> <span class="number">3</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">delete</span> <span class="keyword">from</span> emp <span class="keyword">where</span> id <span class="operator">=</span> <span class="number">5</span>;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="删除触发器"><a href="#删除触发器" class="headerlink" title="删除触发器"></a>删除触发器</h3><p>语法结构 : </p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">drop</span> <span class="keyword">trigger</span> [schema_name.]trigger_name;</span><br></pre></td></tr></table></figure>
+
+<p>如果没有指定 schema_name，默认为当前数据库 。</p>
+<h3 id="查看触发器"><a href="#查看触发器" class="headerlink" title="查看触发器"></a>查看触发器</h3><p>可以通过执行 SHOW TRIGGERS 命令查看触发器的状态、语法等信息。</p>
+<p>语法结构 ： </p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">show</span> triggers ;</span><br></pre></td></tr></table></figure>
+
+<h3 id="触发器注意"><a href="#触发器注意" class="headerlink" title="触发器注意"></a>触发器注意</h3><ol>
+<li><p>在使用触发器的时候需要注意，对于相同的表，相同的事件只能创建一个触发器。</p>
+</li>
+<li><p>及时删除不再需要的触发器。</p>
+</li>
+</ol>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="mailto:undefined">zhangc233</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://zhangc233.github.io/2021/03/20/MySQL%E9%AB%98%E7%BA%A7%E2%80%94%E7%B4%A2%E5%BC%95%E3%80%81%E8%A7%86%E5%9B%BE%E3%80%81%E8%A7%A6%E5%8F%91%E5%99%A8/">https://zhangc233.github.io/2021/03/20/MySQL%E9%AB%98%E7%BA%A7%E2%80%94%E7%B4%A2%E5%BC%95%E3%80%81%E8%A7%86%E5%9B%BE%E3%80%81%E8%A7%A6%E5%8F%91%E5%99%A8/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://zhangc233.github.io" target="_blank">ZC的学习录</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/mysql/">mysql</a><a class="post-meta__tags" href="/tags/%E7%B4%A2%E5%BC%95/">索引</a><a class="post-meta__tags" href="/tags/%E8%A7%86%E5%9B%BE/">视图</a><a class="post-meta__tags" href="/tags/%E8%A7%A6%E5%8F%91%E5%99%A8/">触发器</a></div><div class="post_share"><div class="social-share" data-image="https://cdn.jsdelivr.net/gh/zhangc233/pic@master/img/mysql%E4%BC%98%E5%8C%96.jfif" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/social-share.js/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button button--animated"><i class="fas fa-qrcode"></i> 打赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="/img/wechat.png" target="_blank"><img class="post-qr-code-img" src="/img/wechat.png" alt="微信"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="/img/alipay.png" target="_blank"><img class="post-qr-code-img" src="/img/alipay.png" alt="支付宝"/></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2021/03/26/MySQL%E9%AB%98%E7%BA%A7%E2%80%94%E4%BC%98%E5%8C%96%E3%80%81%E9%94%81%E3%80%81%E4%BD%BF%E7%94%A8/"><img class="prev-cover" src="https://cdn.jsdelivr.net/gh/zhangc233/pic@master/img/mysql%E4%BC%98%E5%8C%96.jfif" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">MySQL高级—相关优化、锁、使用技巧</div></div></a></div><div class="next-post pull-right"><a href="/2021/03/14/Database/"><img class="next-cover" src="https://cdn.jsdelivr.net/gh/zhangc233/pic@master/img/database.jpeg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">数据库面试题</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span> 相关推荐</span></div><div class="relatedPosts-list"><div><a href="/2021/03/26/MySQL高级—优化、锁、使用/" title="MySQL高级—相关优化、锁、使用技巧"><img class="cover" src="https://cdn.jsdelivr.net/gh/zhangc233/pic@master/img/mysql%E4%BC%98%E5%8C%96.jfif" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-03-26</div><div class="title">MySQL高级—相关优化、锁、使用技巧</div></div></a></div><div><a href="/2021/04/08/MySQL高级—常用工具、日志、复制、综合案例/" title="MySQL高级—常用工具、日志、复制、综合案例"><img class="cover" src="https://cdn.jsdelivr.net/gh/zhangc233/pic@master/img/mysql2.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-04-08</div><div class="title">MySQL高级—常用工具、日志、复制、综合案例</div></div></a></div><div><a href="/2021/04/02/MySQL高级—存储引擎、SQL优化/" title="MySQL高级—存储引擎、SQL优化"><img class="cover" src="https://cdn.jsdelivr.net/gh/zhangc233/pic@master/img/mysql2.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-04-02</div><div class="title">MySQL高级—存储引擎、SQL优化</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="twikoo-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%B4%A2%E5%BC%95"><span class="toc-number">1.</span> <span class="toc-text">索引</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%B4%A2%E5%BC%95%E6%A6%82%E8%BF%B0"><span class="toc-number">1.1.</span> <span class="toc-text">索引概述</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%B4%A2%E5%BC%95%E4%BC%98%E5%8A%BF%E5%8A%A3%E5%8A%BF"><span class="toc-number">1.2.</span> <span class="toc-text">索引优势劣势</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%B4%A2%E5%BC%95%E7%BB%93%E6%9E%84"><span class="toc-number">1.3.</span> <span class="toc-text">索引结构</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#BTREE-%E7%BB%93%E6%9E%84"><span class="toc-number">1.3.1.</span> <span class="toc-text">BTREE 结构</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#B-TREE-%E7%BB%93%E6%9E%84"><span class="toc-number">1.3.2.</span> <span class="toc-text">B+TREE 结构</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#MySQL%E4%B8%AD%E7%9A%84B-Tree"><span class="toc-number">1.3.3.</span> <span class="toc-text">MySQL中的B+Tree</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%B4%A2%E5%BC%95%E5%88%86%E7%B1%BB"><span class="toc-number">1.4.</span> <span class="toc-text">索引分类</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%B4%A2%E5%BC%95%E8%AF%AD%E6%B3%95"><span class="toc-number">1.5.</span> <span class="toc-text">索引语法</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA%E7%B4%A2%E5%BC%95"><span class="toc-number">1.5.1.</span> <span class="toc-text">创建索引</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%9F%A5%E7%9C%8B%E7%B4%A2%E5%BC%95"><span class="toc-number">1.5.2.</span> <span class="toc-text">查看索引</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%88%A0%E9%99%A4%E7%B4%A2%E5%BC%95"><span class="toc-number">1.5.3.</span> <span class="toc-text">删除索引</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#ALTER%E5%91%BD%E4%BB%A4"><span class="toc-number">1.5.4.</span> <span class="toc-text">ALTER命令</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%B4%A2%E5%BC%95%E8%AE%BE%E8%AE%A1%E5%8E%9F%E5%88%99"><span class="toc-number">1.6.</span> <span class="toc-text">索引设计原则</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A7%86%E5%9B%BE"><span class="toc-number">2.</span> <span class="toc-text">视图</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%A7%86%E5%9B%BE%E6%A6%82%E8%BF%B0"><span class="toc-number">2.1.</span> <span class="toc-text">视图概述</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA%E6%88%96%E8%80%85%E4%BF%AE%E6%94%B9%E8%A7%86%E5%9B%BE"><span class="toc-number">2.2.</span> <span class="toc-text">创建或者修改视图</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9F%A5%E7%9C%8B%E8%A7%86%E5%9B%BE"><span class="toc-number">2.3.</span> <span class="toc-text">查看视图</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%A0%E9%99%A4%E8%A7%86%E5%9B%BE"><span class="toc-number">2.4.</span> <span class="toc-text">删除视图</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A7%A6%E5%8F%91%E5%99%A8"><span class="toc-number">3.</span> <span class="toc-text">触发器</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%8B%E7%BB%8D"><span class="toc-number">3.1.</span> <span class="toc-text">介绍</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA%E8%A7%A6%E5%8F%91%E5%99%A8"><span class="toc-number">3.2.</span> <span class="toc-text">创建触发器</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%A0%E9%99%A4%E8%A7%A6%E5%8F%91%E5%99%A8"><span class="toc-number">3.3.</span> <span class="toc-text">删除触发器</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9F%A5%E7%9C%8B%E8%A7%A6%E5%8F%91%E5%99%A8"><span class="toc-number">3.4.</span> <span class="toc-text">查看触发器</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%A7%A6%E5%8F%91%E5%99%A8%E6%B3%A8%E6%84%8F"><span class="toc-number">3.5.</span> <span class="toc-text">触发器注意</span></a></li></ol></li></ol></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2021 <i style="color:#FF6A6A;animation: announ_animation 0.8s linear infinite;" class="fa fa-heartbeat"></i> zhangc233</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div><div class="footer_custom_text">Hi, welcome to my blog!</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="font-plus" type="button" title="放大字体"><i class="fas fa-plus"></i></button><button id="font-minus" type="button" title="缩小字体"><i class="fas fa-minus"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="chat_btn" type="button" title="rightside.chat_btn"><i class="fas fa-sms"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div id="local-search"><div class="search-dialog"><div class="search-dialog__title" id="local-search-title">本地搜索</div><div id="local-input-panel"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div></div><hr/><div id="local-search-results"></div><span class="search-close-button"><i class="fas fa-times"></i></span></div><div id="search-mask"></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><script>function panguFn () {
+  if (typeof pangu === 'object') pangu.autoSpacingPage()
+  else {
+    getScript('https://cdn.jsdelivr.net/npm/pangu/dist/browser/pangu.min.js')
+      .then(() => {
+        pangu.autoSpacingPage()
+      })
+  }
+}
+
+function panguInit () {
+  if (true){
+    GLOBAL_CONFIG_SITE.isPost && panguFn()
+  } else {
+    panguFn()
+  }
+}
+
+document.addEventListener('DOMContentLoaded', panguInit)</script><script src="/js/search/local-search.js"></script><script>var preloader = {
+  endLoading: () => {
+    document.body.style.overflow = 'auto';
+    document.getElementById('loading-box').classList.add("loaded")
+  },
+  initLoading: () => {
+    document.body.style.overflow = '';
+    document.getElementById('loading-box').classList.remove("loaded")
+
+  }
+}
+window.addEventListener('load',preloader.endLoading())</script><div class="js-pjax"><script>(()=>{
+  const $countDom = document.getElementById('twikoo-count')
+  const init = () => {
+    let initData = {
+      el: '#twikoo-wrap',
+      envId: 'zc-cloudbase-7gbysfm74e2b2c22',
+      region: ''
+    }
+
+    if (false) {
+      const otherData = false
+      initData = Object.assign(initData, otherData)
+    }
+    
+    twikoo.init(initData)
+  }
+
+  const getCount = () => {
+    twikoo.getCommentsCount({
+      envId: 'zc-cloudbase-7gbysfm74e2b2c22',
+      region: '',
+      urls: [window.location.pathname],
+      includeReply: false
+    }).then(function (res) {
+      $countDom.innerText = res[0].count
+    }).catch(function (err) {
+      console.error(err);
+    });
+  }
+
+  const loadTwikoo = (bool = false) => {
+    if (typeof twikoo === 'object') {
+      init()
+      bool && $countDom && setTimeout(getCount,0)
+    } else {
+      getScript('https://cdn.jsdelivr.net/npm/twikoo/dist/twikoo.all.min.js').then(()=> {
+        init()
+        bool && $countDom && setTimeout(getCount,0)
+      })
+    }
+  }
+
+  if ('Twikoo' === 'Twikoo' || !false) {
+    if (false) btf.loadComment(document.getElementById('twikoo-wrap'), loadTwikoo)
+    else loadTwikoo(true)
+  } else {
+    window.loadOtherComment = () => {
+      loadTwikoo()
+    }
+  }
+})()</script></div><script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script><script src="https://cdn.jsdelivr.net/npm/vue@2.6.11"></script><script src="https://cdn.jsdelivr.net/gh/lete114/CDN/Sum/sakura.js"></script><script src="https://cdn.jsdelivr.net/gh/lete114/CDN/Sum/title.js"></script><script src="/js/botui.js"></script><script data-pjax src="/js/botui_init.js"></script><script async src="/js/back.js"></script><script type="text/javascript" id="clstr_globe" src="//clustrmaps.com/globe.js?d=5V2tOKp8qAdRM-i8eu7ETTO9ugt5uKbbG-U7Yj8uMl8"></script><div class="aplayer no-destroy" data-id="000PeZCQ1i4XVs" data-server="tencent" data-type="artist" data-fixed="true" data-mini="true" data-listFolded="false" data-order="random" data-preload="none" data-autoplay="true" muted></div><script src="/js/chatra.js"></script><canvas class="fireworks" mobile="false"></canvas><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/dist/fireworks.min.js"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/dist/activate-power-mode.min.js"></script><script>POWERMODE.colorful = true;
+POWERMODE.shake = true;
+POWERMODE.mobile = false;
+document.body.addEventListener('input', POWERMODE);
+</script><script>(function(d, w, c) {
+    w.ChatraID = 'bJrdHqZM78fLH3i3H';
+    var s = d.createElement('script');
+    w[c] = w[c] || function() {
+        (w[c].q = w[c].q || []).push(arguments);
+    };
+    s.async = true;
+    s.src = 'https://call.chatra.io/chatra.js';
+    if (d.head) d.head.appendChild(s);
+})(document, window, 'Chatra');
+
+if (true) {
+  var chatBtnFn = () => {
+    var chatBtn = document.getElementById("chat_btn")
+    chatBtn.addEventListener("click", function(){
+      Chatra('openChat')
+    });
+  }
+  chatBtnFn()
+} else {
+  if (true) {
+    function chatBtnHide () {
+      Chatra('hide')
+    }
+    function chatBtnShow () {
+      Chatra('show')
+    }
+  }
+}</script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js"></script><script src="https://cdn.jsdelivr.net/gh/metowolf/MetingJS@1.2/dist/Meting.min.js"></script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = [
+  'title',
+  '#config-diff',
+  '#body-wrap',
+  '#rightside-config-hide',
+  '#rightside-config-show',
+  '.js-pjax'
+]
+
+if (false) {
+  pjaxSelectors.unshift('meta[property="og:image"]', 'meta[property="og:title"]', 'meta[property="og:url"]')
+}
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof chatBtnFn === 'function' && chatBtnFn()
+  typeof panguInit === 'function' && panguInit()
+
+  if (typeof gtag === 'function') {
+    gtag('config', '', {'page_path': window.location.pathname});
+  }
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // Analytics
+  if (false) {
+    MtaH5.pgv()
+  }
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+
+  typeof preloader === 'object' && preloader.endLoading()
+})
+
+
+document.addEventListener('pjax:send', function () {
+  typeof preloader === 'object' && preloader.initLoading()
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+})
+
+document.addEventListener('pjax:error', (e) => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div><script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"tagMode":false,"debug":false,"model":{"jsonPath":"/live2dw/assets/shizuku.model.json"},"display":{"position":"right","width":150,"height":300,"hOffset":20,"vOffset":-20},"mobile":{"show":false},"log":false,"pluginJsPath":"lib/","pluginModelPath":"assets/","pluginRootPath":"live2dw/"});</script></body></html>
