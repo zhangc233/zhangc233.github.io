@@ -1,0 +1,520 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><title>虚拟机栈 | ZC的学习录</title><meta name="keywords" content="虚拟机栈"><meta name="author" content="zhangc233"><meta name="copyright" content="zhangc233"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="虚拟机栈概述由于跨平台性的设计，Java的指令都是根据栈来设计的。由于不同平台CPU架构不同，所以不能设计为基于寄存器的。 其优点是跨平台，指令集小，编译器容易实现，缺点是性能下降，实现同样的功能需要更多的指令。 为什么不少Java开发人员一提到Java内存结构，就会非常粗粒度地将JVM中的内存区理解为仅有Java堆（heap）和Java战（stack）？ 首先栈是运行时的单位，而堆是存储的单位：">
+<meta property="og:type" content="article">
+<meta property="og:title" content="虚拟机栈">
+<meta property="og:url" content="https://zhangc233.github.io/2020/11/30/%E8%99%9A%E6%8B%9F%E6%9C%BA%E6%A0%88/index.html">
+<meta property="og:site_name" content="ZC的学习录">
+<meta property="og:description" content="虚拟机栈概述由于跨平台性的设计，Java的指令都是根据栈来设计的。由于不同平台CPU架构不同，所以不能设计为基于寄存器的。 其优点是跨平台，指令集小，编译器容易实现，缺点是性能下降，实现同样的功能需要更多的指令。 为什么不少Java开发人员一提到Java内存结构，就会非常粗粒度地将JVM中的内存区理解为仅有Java堆（heap）和Java战（stack）？ 首先栈是运行时的单位，而堆是存储的单位：">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/zhangc233/pic@master/img/20210202170041525.png">
+<meta property="article:published_time" content="2020-11-30T13:00:00.000Z">
+<meta property="article:modified_time" content="2021-08-14T02:11:26.255Z">
+<meta property="article:author" content="zhangc233">
+<meta property="article:tag" content="操作数栈">
+<meta property="article:tag" content="局部变量表">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/zhangc233/pic@master/img/20210202170041525.png"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js"></script><script src="https://cdn.jsdelivr.net/gh/metowolf/MetingJS@1.2/dist/Meting.min.js"></script><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://zhangc233.github.io/2020/11/30/%E8%99%9A%E6%8B%9F%E6%9C%BA%E6%A0%88/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//hm.baidu.com"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><meta name="yandex-verification" content="{&quot;theme_color&quot;:{&quot;enable&quot;:true,&quot;main&quot;:&quot;#49B1F5&quot;,&quot;paginator&quot;:&quot;#00c4b6&quot;,&quot;button_hover&quot;:&quot;#FF7242&quot;,&quot;text_selection&quot;:&quot;#00c4b6&quot;,&quot;link_color&quot;:&quot;#99a9bf&quot;,&quot;meta_color&quot;:&quot;#858585&quot;,&quot;hr_color&quot;:&quot;#A4D8FA&quot;,&quot;code_foreground&quot;:&quot;#F47466&quot;,&quot;code_background&quot;:&quot;rgba(27, 31, 35, .05)&quot;,&quot;toc_color&quot;:&quot;#00c4b6&quot;,&quot;blockquote_padding_color&quot;:&quot;#49b1f5&quot;,&quot;blockquote_background_color&quot;:&quot;#49b1f5&quot;}}"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><script>var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?fbe67500831b74f989430bb8dbe1e7ca";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"search.xml","languages":{"hits_empty":"找不到您查询的内容：${query}"}},
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: {"limitCount":50,"languages":{"author":"作者: zhangc233","link":"链接: ","source":"来源: ZC的学习录","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。"}},
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#121212","position":"bottom-left"},
+  source: {
+    jQuery: 'https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js',
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/js/jquery.justifiedGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/css/justifiedGallery.min.css'
+    },
+    fancybox: {
+      js: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.css'
+    }
+  },
+  isPhotoFigcaption: true,
+  islazyload: false,
+  isanchor: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = { 
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2021-08-14 10:11:26'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          if (t === 'dark') activateDarkMode()
+          else if (t === 'light') activateLightMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const fontSizeVal = saveToLocal.get('global-font-size')
+    if (fontSizeVal !== undefined) {
+      document.documentElement.style.setProperty('--global-font-size', fontSizeVal + 'px')
+    }
+    })(window)</script><link rel="stylesheet" href="/css/Lete.css"><link rel="stylesheet" href="/css/card_botui.css" /><link rel="stylesheet" href="/css/iconfont.css" /><style type="text/css">#toggle-sidebar {bottom: 80px}</style><style type="text/css">#toggle-sidebar {left:100px}</style><meta name="generator" content="Hexo 5.4.0"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><div id="web_bg"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="author-avatar"><img class="avatar-img" src="/img/avatar.jpg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data"><div class="data-item is-center"><div class="data-item-link"><a href="/archives/"><div class="headline">文章</div><div class="length-num">42</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/tags/"><div class="headline">标签</div><div class="length-num">84</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/categories/"><div class="headline">分类</div><div class="length-num">16</div></a></div></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw iconfont  icon-shouye_huaban1"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw iconfont  icon-timeAxis"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw iconfont  icon-biaoqian_huaban1"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw iconfont  icon-quanbu"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="javascript:void(0);"><i class="fa-fw iconfont icon-yinle"></i><span> 生活</span><i class="fas fa-chevron-down expand"></i></a><ul class="menus_item_child"><li><a class="site-page" href="/music/"><i class="fa-fw iconfont  icon-yinle1"></i><span> 音乐</span></a></li><li><a class="site-page" href="/gallery/"><i class="fa-fw iconfont  icon-xiangce"></i><span> 相册</span></a></li><li><a class="site-page" href="/FilmAndTV/"><i class="fa-fw iconfont  icon-wodezhuifan"></i><span> 追番</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw iconfont  icon-lianjie-tianchong"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw iconfont  icon-guanyu1"></i><span> 关于我</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://cdn.jsdelivr.net/gh/zhangc233/pic@master/img/20210202170041525.png')"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">ZC的学习录</a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw iconfont  icon-shouye_huaban1"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw iconfont  icon-timeAxis"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw iconfont  icon-biaoqian_huaban1"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw iconfont  icon-quanbu"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="javascript:void(0);"><i class="fa-fw iconfont icon-yinle"></i><span> 生活</span><i class="fas fa-chevron-down expand"></i></a><ul class="menus_item_child"><li><a class="site-page" href="/music/"><i class="fa-fw iconfont  icon-yinle1"></i><span> 音乐</span></a></li><li><a class="site-page" href="/gallery/"><i class="fa-fw iconfont  icon-xiangce"></i><span> 相册</span></a></li><li><a class="site-page" href="/FilmAndTV/"><i class="fa-fw iconfont  icon-wodezhuifan"></i><span> 追番</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw iconfont  icon-lianjie-tianchong"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw iconfont  icon-guanyu1"></i><span> 关于我</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">虚拟机栈</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-11-30T13:00:00.000Z" title="发表于 2020-11-30 21:00:00">2020-11-30</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2021-08-14T02:11:26.255Z" title="更新于 2021-08-14 10:11:26">2021-08-14</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/JVM/">JVM</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">字数总计:</span><span class="word-count">4.7k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>14分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h2 id="虚拟机栈概述"><a href="#虚拟机栈概述" class="headerlink" title="虚拟机栈概述"></a><strong>虚拟机栈概述</strong></h2><p>由于跨平台性的设计，Java的指令都是根据栈来设计的。由于不同平台CPU架构不同，所以不能设计为基于寄存器的。 其优点是跨平台，指令集小，编译器容易实现，缺点是性能下降，实现同样的功能需要更多的指令。</p>
+<p>为什么不少Java开发人员一提到Java内存结构，就会非常粗粒度地将JVM中的内存区理解为仅有Java堆（heap）和Java战（stack）？</p>
+<p>首先栈是运行时的单位，而堆是存储的单位：</p>
+<ul>
+<li><p>栈解决程序的运行问题，即程序如何执行，或者说如何处理数据。</p>
+</li>
+<li><p>堆解决的是数据存储的问题，即数据怎么放，放哪里。</p>
+</li>
+</ul>
+<h3 id="Java虚拟机栈是什么"><a href="#Java虚拟机栈是什么" class="headerlink" title="Java虚拟机栈是什么"></a><strong>Java虚拟机栈是什么</strong></h3><ul>
+<li><p>Java虚拟机栈（Java Virtual Machine  Stack），早期也叫Java栈。每个线程在创建时都会创建一个虚拟机栈，其内部保存一个个的栈帧（StackFrame），对应着一次次的Java方法调用。</p>
+</li>
+<li><p>Java虚拟机栈是线程私有的。</p>
+</li>
+</ul>
+  <img src="https://img-blog.csdnimg.cn/20210202164634273.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNjI2OTk2,size_16,color_FFFFFF,t_70" style="zoom:80%;" />
+
+<h3 id="生命周期"><a href="#生命周期" class="headerlink" title="生命周期"></a><strong>生命周期</strong></h3><p>生命周期和线程一致，即线程结束了，该虚拟机栈也销毁了。</p>
+<h3 id="作用"><a href="#作用" class="headerlink" title="作用"></a><strong>作用</strong></h3><p>主管Java程序的运行，它保存方法的局部变量、部分结果，并参与方法的调用和返回。</p>
+<ul>
+<li>局部变量，它是相比于成员变量来说的（或属性）</li>
+<li>基本数据类型变量 VS 引用类型变量（类、数组、接口）</li>
+</ul>
+<h3 id="栈的特点"><a href="#栈的特点" class="headerlink" title="栈的特点"></a><strong>栈的特点</strong></h3><p>栈是一种快速有效的分配存储方式，访问速度仅次于程序计数器。JVM直接对Java栈的操作只有两个：</p>
+<ul>
+<li>每个方法执行，伴随着进栈（入栈、压栈）</li>
+<li>执行结束后的出栈工作</li>
+</ul>
+<p> <strong>注：对于栈来说不存在垃圾回收问题（栈存在溢出的情况）</strong></p>
+<p><strong>开发中遇到哪些异常？</strong></p>
+<p>Java 虚拟机规范允许Java栈的大小是动态的或者是固定不变的。</p>
+<ol>
+<li>如果采用固定大小的Java虚拟机栈，那么每一个线程的Java虚拟机栈容量可以在线程创建的时候独立选定。如果线程请求分配的栈容量超过Java虚拟机栈允许的最大容量，Java虚拟机将会抛出一个StackoverflowError 异常。</li>
+<li>如果Java虚拟机栈可以动态扩展，并且在尝试扩展的时候无法申请到足够的内存，或者在创建新的线程时没有足够的内存去创建对应的虚拟机栈，那Java虚拟机将会抛出一个 outofMemoryError 异常。</li>
+</ol>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">StackErrorTest</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">int</span> count = <span class="number">1</span>;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        System.out.println(count++);</span><br><span class="line">        main(args);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">9656</span></span><br><span class="line">Exception in thread <span class="string">&quot;main&quot;</span> java.lang.StackOverflowError</span><br></pre></td></tr></table></figure>
+
+<h3 id="设置栈内存大小"><a href="#设置栈内存大小" class="headerlink" title="设置栈内存大小"></a><strong>设置栈内存大小</strong></h3><p>可以使用参数 -Xss选项来设置线程的最大栈空间，栈的大小直接决定了函数调用的最大可达深度。</p>
+<blockquote>
+<p>-Xss1m<br>-Xss1k</p>
+</blockquote>
+<h3 id="栈的存储单位"><a href="#栈的存储单位" class="headerlink" title="栈的存储单位"></a><strong>栈的存储单位</strong></h3><ul>
+<li>每个线程都有自己的栈，栈中的数据都是以栈帧（Stack Frame）的格式存在。</li>
+<li>在这个线程上正在执行的每个方法都各自对应一个栈帧（Stack Frame）。</li>
+<li>栈帧是一个内存区块，是一个数据集，维系着方法执行过程中的各种数据信息。</li>
+</ul>
+<h3 id="栈中存储什么？"><a href="#栈中存储什么？" class="headerlink" title="栈中存储什么？"></a><strong>栈中存储什么？</strong></h3><ul>
+<li><p>栈中存储的就是栈帧，栈帧中存储着方法和类的信息。</p>
+</li>
+<li><p>JVM直接对Java栈的操作只有两个，就是对栈帧的压栈和出栈，遵循“先进后出 “后进先出” 原则。</p>
+</li>
+<li><p>在一条活动线程中，一个时间点上，只会有一个活动的栈帧。即只有当前正在执行的方法的栈帧（栈顶栈帧）是有效的，这个栈帧被称为当前栈帧（Current Frame），与当前栈帧相对应的方法就是当前方法（Current Method），定义这个方法的类就是当前类（Current  Class）。</p>
+</li>
+<li><p>执行引擎运行的所有字节码指令只针对当前栈帧进行操作。</p>
+</li>
+<li><p>如果在该方法中调用了其他方法，对应的新的栈帧会被创建出来，放在栈的顶端，成为新的当前帧。</p>
+<img src="https://cdn.jsdelivr.net/gh/zhangc233/pic@master/img/20210202170041525.png" style="zoom:80%;" />
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">StackFrameTest</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        method01();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">int</span> <span class="title">method01</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;方法1的开始&quot;</span>);</span><br><span class="line">        <span class="keyword">int</span> i = method02();</span><br><span class="line">        System.out.println(<span class="string">&quot;方法1的结束&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> i;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">int</span> <span class="title">method02</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;方法2的开始&quot;</span>);</span><br><span class="line">        <span class="keyword">int</span> i = method03();;</span><br><span class="line">        System.out.println(<span class="string">&quot;方法2的结束&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> i;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">int</span> <span class="title">method03</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;方法3的开始&quot;</span>);</span><br><span class="line">        <span class="keyword">int</span> i = <span class="number">30</span>;</span><br><span class="line">        System.out.println(<span class="string">&quot;方法3的结束&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> i;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<p>输出结果为：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">方法<span class="number">1</span>的开始</span><br><span class="line">方法<span class="number">2</span>的开始</span><br><span class="line">方法<span class="number">3</span>的开始</span><br><span class="line">方法<span class="number">3</span>的结束</span><br><span class="line">方法<span class="number">2</span>的结束</span><br><span class="line">方法<span class="number">1</span>的结束</span><br></pre></td></tr></table></figure>
+
+<h3 id="栈运行原理"><a href="#栈运行原理" class="headerlink" title="栈运行原理"></a><strong>栈运行原理</strong></h3><ul>
+<li>不同线程中所包含的栈帧是不允许存在相互引用的，即不可能在一个栈帧之中引用另外一个线程的栈帧；</li>
+<li>如果当前方法调用了其他方法，方法返回之际，当前栈帧会传回此方法的执行结果给前一个栈帧，接着，虚拟机会丢弃当前栈帧，使得前一个栈帧重新成为当前栈帧；</li>
+<li>Java方法有两种返回函数的方式，一种是正常的函数返回，使用return指令；另外一种是抛出异常。不管使用哪种方式，都会导致栈帧被弹出。</li>
+</ul>
+<h3 id="栈帧的内部结构"><a href="#栈帧的内部结构" class="headerlink" title="栈帧的内部结构"></a><strong>栈帧的内部结构</strong></h3><p>每个栈帧中存储着：</p>
+<ul>
+<li>局部变量表（Local Variables）</li>
+<li>操作数栈（operand Stack）（或表达式栈）</li>
+<li>动态链接（DynamicLinking）（或指向运行时常量池的方法引用）</li>
+<li>方法返回地址（Return Address）（或方法正常退出或者异常退出的定义）<br><img src="https://img-blog.csdnimg.cn/20210202174023289.jpg?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNjI2OTk2,size_16,color_FFFFFF,t_70"></li>
+<li>并行的每个线程下的栈都是私有的，因此每个线程都有自己各自的虚拟机栈，并且每个栈里面都有很多栈帧，栈帧的大小主要由局部变量表和操作数栈决定的。<br><img src="https://img-blog.csdnimg.cn/20210202174111754.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNjI2OTk2,size_16,color_FFFFFF,t_70"></li>
+</ul>
+<h2 id="局部变量表"><a href="#局部变量表" class="headerlink" title="局部变量表"></a>局部变量表</h2><p>局部变量表（Local Variables）：被称之为局部变量数组或本地变量表。</p>
+<ul>
+<li>局部变量表定义为一个数字数组，主要用于存储方法参数和定义在方法体内的局部变量，这些数据类型包括各类基本数据类型、对象引用（reference），以及returnAddress类型。</li>
+<li>由于局部变量表是建立在线程的栈上，是线程的私有数据，因此不存在数据安全问题。</li>
+<li>局部变量表所需的容量大小是在编译期就确定下来的，并保存在方法的Code属性的maximum local  variables数据项中。在方法运行期间是不会改变局部变量表的大小的。</li>
+<li>方法嵌套调用的次数由栈的大小决定。一般来说，栈越大，方法嵌套调用次数越多。而对一个函数而言，它的参数和局部变量越多，使得局部变量表膨胀，它的栈帧就越大，函数调用占用的栈空间就会越多，进而导致其嵌套调用次数就会减少。</li>
+<li>局部变量表中的变量只在当前方法调用中有效。在方法执行时，虚拟机通过使用局部变量表完成参数值到参数变量列表的传递过程，当方法调用结束后，随着方法栈帧的销毁，局部变量表也会随之销毁。</li>
+</ul>
+<h3 id="Slot"><a href="#Slot" class="headerlink" title="Slot"></a><strong>Slot</strong></h3><ul>
+<li>参数值的存放总是在局部变量数组的index0开始，到数组长度-1的索引结束。</li>
+<li>局部变量表最基本的存储单元是slot（变量槽），局部变量表中存放编译期可知的各种基本数据类型（8种），引用类型（reference），returnAddress类型的变量。</li>
+<li>在局部变量表里，32位以内的类型只占用一个slot（包括returnAddress类型），64位的类型（long和double）占用两个slot。</li>
+<li>byte、short、char 在存储前被转换为int，boolean也被转换为int，0表示false，非0表示true。 long和double则占据两个slot。</li>
+<li>JVM会为局部变量表中的每一个slot都分配一个访问索引，通过这个索引即可成功访问到局部变量表中指定的局部变量值。</li>
+<li>当一个实例方法被调用的时候，它的方法参数和方法体内部定义的局部变量将会按照顺序被复制到局部变量表中的每一个slot上。</li>
+<li>如果需要访问局部变量表中一个 64bit 的局部变量值时，只需要使用前一个索引即可。</li>
+<li>如果当前帧是由构造方法或者实例方法创建的，那么该对象引用this将会存放在index为0的slot处，其余的参数按照参数表顺序继续排列。</li>
+</ul>
+<p><img src="https://img-blog.csdnimg.cn/20210216190106201.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNjI2OTk2,size_16,color_FFFFFF,t_70"></p>
+<p><strong>Slot的重复利用</strong></p>
+<p>栈帧中的局部变量表中的槽位是可以重用的，如果一个局部变量过了其作用域，那么在其作用域之后申明的新的局部变就很有可能会复用过期局部变量的槽位，从而达到节省资源的目的。</p>
+<p><img src="https://img-blog.csdnimg.cn/20210216190133216.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNjI2OTk2,size_16,color_FFFFFF,t_70"></p>
+<p><strong>静态变量与局部变量的对比</strong></p>
+<p>变量的分类：</p>
+<p>按数据类型分：基本数据类型、引用数据类型。</p>
+<p>按类中声明的位置分：成员变量（类变量，实例变量）、局部变量。</p>
+<p>类变量：linking的paper阶段，给类变量默认赋值，init阶段给类变量显示赋值即静态代码块。</p>
+<p>实例变量：随着对象创建，会在堆空间中分配实例变量空间，并进行默认赋值。</p>
+<p>局部变量：在使用前必须进行显式赋值，不然编译不通过。</p>
+<ul>
+<li>参数表分配完毕之后，再根据方法体内定义的变量的顺序和作用域分配。</li>
+<li>类变量表有两次初始化的机会，第一次是在“准备阶段”，执行系统初始化，对类变量设置零值，另一次则是在“初始化”阶段，赋予程序员在代码中定义的初始值。</li>
+<li>和类变量初始化不同的是，局部变量表不存在系统初始化的过程，这意味着一旦定义了局部变量则必须人为的初始化，否则无法使用。</li>
+<li>在栈帧中，与性能调优关系最为密切的部分就是局部变量表。在方法执行时，虚拟机使用局部变量表完成方法的传递。</li>
+<li>局部变量表中的变量也是重要的垃圾回收根节点，只要被局部变量表中直接或间接引用的对象都不会被回收。</li>
+</ul>
+<h2 id="操作数栈"><a href="#操作数栈" class="headerlink" title="操作数栈"></a>操作数栈</h2><p><img src="https://img-blog.csdnimg.cn/20210216171709568.png"></p>
+<h3 id="概念"><a href="#概念" class="headerlink" title="概念"></a><strong>概念</strong></h3><p>操作数栈：Operand Stack</p>
+<ul>
+<li>每一个独立的栈帧除了包含局部变量表以外，还包含一个后进先出的操作数栈，也可以称之为表达式栈（Expression Stack）;</li>
+<li>操作数栈，在方法执行过程中，根据字节码指令，往栈中写入数据或提取数据，即入栈（push）和 出栈（pop）;</li>
+<li>某些字节码指令将值压入操作数栈，其余的字节码指令将操作数取出栈，使用它们后再把结果压入栈，比如：执行复制、交换、求和等操作；</li>
+<li>操作数栈，主要用于保存计算过程的中间结果，同时作为计算过程中变量临时的存储空间。<br><img src="https://img-blog.csdnimg.cn/2021021419235896.png"></li>
+<li>操作数栈就是JVM执行引擎的一个工作区，当一个方法刚开始执行的时候，一个新的栈帧也会随之被创建出来，这时，该方法的操作数栈是空的；</li>
+<li>每一个操作数栈都会拥有一个明确的栈深度用于存储数值，其所需的最大深度在编译期就定义好了，保存在方法的Code属性中，为maxstack 的值；</li>
+<li>栈中的任何一个元素都可以是任意的Java数据类型；</li>
+<li>在操作数栈中，32bit的类型占用一个栈单位深度，64bit的类型占用两个栈单位深度；</li>
+<li>操作数栈并非采用访问索引的方式来进行数据访问的，而是只能通过标准的入栈和出栈操作来完成一次数据访问；</li>
+<li>如果被调用的方法带有返回值的话，其返回值将会被压入当前栈帧的操作数栈中，并更新PC寄存器中下一条需要执行的字节码指令（该方法执行完成，回到之前方法的字节码指令）；</li>
+<li>操作数栈中元素的数据类型必须与字节码指令的序列严格匹配，由编译器在编译器期间进行验证，同时在类加载过程中的类检验阶段的数据流分析阶段要再次验证。|</li>
+</ul>
+<p><strong>注：Java虚拟机的解释引擎是基于栈的执行引擎，其中的栈指的就是操作数栈。</strong></p>
+<h3 id="代码解释"><a href="#代码解释" class="headerlink" title="代码解释"></a><strong>代码解释</strong></h3><p>给一段代码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">testAddOperation</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">byte</span> i = <span class="number">15</span>;</span><br><span class="line">    <span class="keyword">int</span> j = <span class="number">8</span>;</span><br><span class="line">    <span class="keyword">int</span> k = i + j;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>编译成字节码指令:<br><img src="https://img-blog.csdnimg.cn/20210216170639798.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNjI2OTk2,size_16,color_FFFFFF,t_70"><br><strong>byte、short、char、boolean 内部都是使用int型来进行保存的。</strong></p>
+<p>从上面的代码可知，通过bipush对操作数 15 和 8进行入栈操作，同时使用的是 iadd方法进行相加操作，其中 i 代表的就是 int，也就是int类型的加法操作。</p>
+<p>执行流程如下所示：</p>
+<ol>
+<li>首先执行第一条语句，PC寄存器指向的是0，也就是指令地址为0，然后使用bipush让操作数15入栈；<br><img src="https://img-blog.csdnimg.cn/20210216170710558.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNjI2OTk2,size_16,color_FFFFFF,t_70"></li>
+<li>执行完后，让PC +1，指向下一行代码，下一行代码就是将操作数栈的元素存储到局部变量表1的位置，可以看到局部变量表的已经增加了一个元素；<br><img src="https://img-blog.csdnimg.cn/20210216170742167.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNjI2OTk2,size_16,color_FFFFFF,t_70"></li>
+</ol>
+<p><strong>为什么局部变量表不是从0开始的呢？</strong></p>
+<p>其实局部变量表也是从0开始的，但是因为0号位置存储的是this指针，所以说就直接省略了。</p>
+<ol start="3">
+<li>然后PC+1，指向的是下一行。让操作数8也入栈，同时执行store操作，存入局部变量表中；<br><img src="https://img-blog.csdnimg.cn/20210216170802946.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNjI2OTk2,size_16,color_FFFFFF,t_70"><img src="https://img-blog.csdnimg.cn/20210216170808346.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNjI2OTk2,size_16,color_FFFFFF,t_70"></li>
+<li>然后从局部变量表中，依次将数据放在操作数栈中；<br><img src="https://img-blog.csdnimg.cn/20210216170829819.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNjI2OTk2,size_16,color_FFFFFF,t_70"><br><img src="https://img-blog.csdnimg.cn/20210216170840404.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNjI2OTk2,size_16,color_FFFFFF,t_70"></li>
+<li>然后将操作数栈中的两个元素执行相加操作，并存储在局部变量表3的位置；<br><img src="https://img-blog.csdnimg.cn/20210216170851989.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNjI2OTk2,size_16,color_FFFFFF,t_70"><br><img src="https://img-blog.csdnimg.cn/20210216170858374.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNjI2OTk2,size_16,color_FFFFFF,t_70"></li>
+<li>最后PC寄存器的位置指向10，也就是return方法，则直接退出方法</li>
+</ol>
+<h3 id="栈顶缓存技术"><a href="#栈顶缓存技术" class="headerlink" title="栈顶缓存技术"></a><strong>栈顶缓存技术</strong></h3><ul>
+<li>基于栈式架构的虚拟机所使用的零地址指令更加紧凑，但完成一项操作的时候必然需要使用更多的入栈和出栈指令，这同时也就意味着将需要更多的指令分派（instructiondispatch）次数和内存读/写次数；</li>
+<li>由于操作数是存储在内存中的，因此频繁地执行内存读/写操作必然会影响执行速度。为了解决这个问题，HotSpot  JVM的设计者们提出了栈顶缓存（Tos，Top-of-Stack Cashing）技术，将栈顶元素全部缓存在物理CPU的寄存器中，以此降低对内存的读/写次数，提升执行引擎的执行效率。</li>
+</ul>
+<h2 id="动态链接"><a href="#动态链接" class="headerlink" title="动态链接"></a>动态链接</h2><p><img src="https://img-blog.csdnimg.cn/20210216180441689.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNjI2OTk2,size_16,color_FFFFFF,t_70"></p>
+<ul>
+<li>动态链接、方法返回地址、附加信息 ：有些地方被称为帧数据区；</li>
+<li>每一个栈帧内部都包含一个指向运行时常量池中该栈帧所属方法的引用，这个引用的目的就是为了支持当前方法的代码能够实现动态链接（Dynamic Linking），比如：invoke指令；</li>
+<li>Java源文件被编译到字节码文件中时，所有的变量和方法引用都作为符号引用（symbolic Reference）保存在class文件的常量池里。</li>
+</ul>
+<p>比如：一个方法调用了另外的其他方法时，就是通过常量池中指向方法的符号引用来表示的，那么动态链接的作用就是为了将这些符号引用转换为调用方法的直接引用（即方法运行所需的的信息存在常量池里面，当方法执行时，需要去常量池里面拿，而拿的方法就是动态链接）。<br><img src="https://img-blog.csdnimg.cn/20210216180656324.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNjI2OTk2,size_16,color_FFFFFF,t_70"><br><strong>为什么需要运行时常量池？</strong></p>
+<p>因为不同的方法，都可能调用常量或者方法，因此在常量池里存储一份，可以节省空间， 而常量池的作用：就是为了提供一些符号和常量，便于指令的识别。</p>
+<h2 id="方法返回地址"><a href="#方法返回地址" class="headerlink" title="方法返回地址"></a>方法返回地址</h2><p><strong>方法返回地址存放调用该方法的pc寄存器的值。</strong></p>
+<p>一个方法的结束，有两种方式：</p>
+<ul>
+<li>正常执行完成；</li>
+<li>出现未处理的异常，非正常退出。</li>
+</ul>
+<p>无论通过哪种方式退出，在方法退出后都返回到该方法被调用的位置。方法正常退出时，调用者的 pc 计数器的值作为返回地址，即调用该方法的指令的下一条指令的地址；而通过异常退出的，返回地址要通过异常表来确定，栈帧中一般不会保存这部分信息。</p>
+<ul>
+<li>一个方法在正常调用完成之后，究竟需要使用哪一个返回指令，还需要根据方法返回值的实际数据类型而定；</li>
+<li>在字节码指令中，返回指令包含ireturn（当返回值是boolean，byte，char，short和int类型时使用），lreturn（Long类型），freturn（Float类型），dreturn（Double类型），areturn。另外还有一个return指令声明为void的方法，实例初始化方法，类和接口的初始化方法使用。</li>
+</ul>
+<p>方法执行遇到异常：</p>
+<ul>
+<li>在方法执行过程中遇到异常（Exception），并且这个异常没有在方法内进行处理，也就是说在本方法的异常表中没有搜索到匹配的异常处理器，就会导致方法退出；</li>
+<li>方法执行过程中，抛出异常时的异常处理，存储在一个异常处理表中，方便在发生异常的时候找到处理异常的代码；</li>
+<li>通过异常完成出口退出的不会给他的上层调用者产生任何的返回值。<br><img src="https://img-blog.csdnimg.cn/20210216181257381.png"><br>本质上，方法的退出就是当前栈帧出栈的过程。此时，需要恢复上层方法的局部变量表、操作数栈、将返回值压入调用者栈帧的操作数栈、设置PC寄存器值等，让调用者方法继续执行下去。</li>
+</ul>
+<h2 id="一些附加信息"><a href="#一些附加信息" class="headerlink" title="一些附加信息"></a>一些附加信息</h2><p>栈帧中还允许携带与Java虚拟机实现相关的一些附加信息。例如：对程序调试提供支持的信息。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="mailto:undefined">zhangc233</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://zhangc233.github.io/2020/11/30/%E8%99%9A%E6%8B%9F%E6%9C%BA%E6%A0%88/">https://zhangc233.github.io/2020/11/30/%E8%99%9A%E6%8B%9F%E6%9C%BA%E6%A0%88/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://zhangc233.github.io" target="_blank">ZC的学习录</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E6%93%8D%E4%BD%9C%E6%95%B0%E6%A0%88/">操作数栈</a><a class="post-meta__tags" href="/tags/%E5%B1%80%E9%83%A8%E5%8F%98%E9%87%8F%E8%A1%A8/">局部变量表</a></div><div class="post_share"><div class="social-share" data-image="https://cdn.jsdelivr.net/gh/zhangc233/pic@master/img/20210202170041525.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/social-share.js/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button button--animated"><i class="fas fa-qrcode"></i> 打赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="/img/wechat.png" target="_blank"><img class="post-qr-code-img" src="/img/wechat.png" alt="微信"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="/img/alipay.png" target="_blank"><img class="post-qr-code-img" src="/img/alipay.png" alt="支付宝"/></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2020/12/06/%E5%A0%86/"><img class="prev-cover" src="https://cdn.jsdelivr.net/gh/zhangc233/pic@master/img/2021022018254959.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">堆</div></div></a></div><div class="next-post pull-right"><a href="/2020/11/24/%E7%A8%8B%E5%BA%8F%E8%AE%A1%E6%95%B0%E5%99%A8/"><img class="next-cover" src="https://cdn.jsdelivr.net/gh/zhangc233/pic@master/img/20210201183248423.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">程序计数器</div></div></a></div></nav><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="twikoo-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%99%9A%E6%8B%9F%E6%9C%BA%E6%A0%88%E6%A6%82%E8%BF%B0"><span class="toc-number">1.</span> <span class="toc-text">虚拟机栈概述</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Java%E8%99%9A%E6%8B%9F%E6%9C%BA%E6%A0%88%E6%98%AF%E4%BB%80%E4%B9%88"><span class="toc-number">1.1.</span> <span class="toc-text">Java虚拟机栈是什么</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F"><span class="toc-number">1.2.</span> <span class="toc-text">生命周期</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%9C%E7%94%A8"><span class="toc-number">1.3.</span> <span class="toc-text">作用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%88%E7%9A%84%E7%89%B9%E7%82%B9"><span class="toc-number">1.4.</span> <span class="toc-text">栈的特点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AE%BE%E7%BD%AE%E6%A0%88%E5%86%85%E5%AD%98%E5%A4%A7%E5%B0%8F"><span class="toc-number">1.5.</span> <span class="toc-text">设置栈内存大小</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%88%E7%9A%84%E5%AD%98%E5%82%A8%E5%8D%95%E4%BD%8D"><span class="toc-number">1.6.</span> <span class="toc-text">栈的存储单位</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%88%E4%B8%AD%E5%AD%98%E5%82%A8%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="toc-number">1.7.</span> <span class="toc-text">栈中存储什么？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%88%E8%BF%90%E8%A1%8C%E5%8E%9F%E7%90%86"><span class="toc-number">1.8.</span> <span class="toc-text">栈运行原理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%88%E5%B8%A7%E7%9A%84%E5%86%85%E9%83%A8%E7%BB%93%E6%9E%84"><span class="toc-number">1.9.</span> <span class="toc-text">栈帧的内部结构</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B1%80%E9%83%A8%E5%8F%98%E9%87%8F%E8%A1%A8"><span class="toc-number">2.</span> <span class="toc-text">局部变量表</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Slot"><span class="toc-number">2.1.</span> <span class="toc-text">Slot</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%93%8D%E4%BD%9C%E6%95%B0%E6%A0%88"><span class="toc-number">3.</span> <span class="toc-text">操作数栈</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A6%82%E5%BF%B5"><span class="toc-number">3.1.</span> <span class="toc-text">概念</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%A3%E7%A0%81%E8%A7%A3%E9%87%8A"><span class="toc-number">3.2.</span> <span class="toc-text">代码解释</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%88%E9%A1%B6%E7%BC%93%E5%AD%98%E6%8A%80%E6%9C%AF"><span class="toc-number">3.3.</span> <span class="toc-text">栈顶缓存技术</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8A%A8%E6%80%81%E9%93%BE%E6%8E%A5"><span class="toc-number">4.</span> <span class="toc-text">动态链接</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%96%B9%E6%B3%95%E8%BF%94%E5%9B%9E%E5%9C%B0%E5%9D%80"><span class="toc-number">5.</span> <span class="toc-text">方法返回地址</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E4%BA%9B%E9%99%84%E5%8A%A0%E4%BF%A1%E6%81%AF"><span class="toc-number">6.</span> <span class="toc-text">一些附加信息</span></a></li></ol></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2021 <i style="color:#FF6A6A;animation: announ_animation 0.8s linear infinite;" class="fa fa-heartbeat"></i> zhangc233</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div><div class="footer_custom_text">Hi, welcome to my blog!</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="font-plus" type="button" title="放大字体"><i class="fas fa-plus"></i></button><button id="font-minus" type="button" title="缩小字体"><i class="fas fa-minus"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="chat_btn" type="button" title="rightside.chat_btn"><i class="fas fa-sms"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div id="local-search"><div class="search-dialog"><div class="search-dialog__title" id="local-search-title">本地搜索</div><div id="local-input-panel"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div></div><hr/><div id="local-search-results"></div><span class="search-close-button"><i class="fas fa-times"></i></span></div><div id="search-mask"></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><script>function panguFn () {
+  if (typeof pangu === 'object') pangu.autoSpacingPage()
+  else {
+    getScript('https://cdn.jsdelivr.net/npm/pangu/dist/browser/pangu.min.js')
+      .then(() => {
+        pangu.autoSpacingPage()
+      })
+  }
+}
+
+function panguInit () {
+  if (true){
+    GLOBAL_CONFIG_SITE.isPost && panguFn()
+  } else {
+    panguFn()
+  }
+}
+
+document.addEventListener('DOMContentLoaded', panguInit)</script><script src="/js/search/local-search.js"></script><script>var preloader = {
+  endLoading: () => {
+    document.body.style.overflow = 'auto';
+    document.getElementById('loading-box').classList.add("loaded")
+  },
+  initLoading: () => {
+    document.body.style.overflow = '';
+    document.getElementById('loading-box').classList.remove("loaded")
+
+  }
+}
+window.addEventListener('load',preloader.endLoading())</script><div class="js-pjax"><script>(()=>{
+  const $countDom = document.getElementById('twikoo-count')
+  const init = () => {
+    let initData = {
+      el: '#twikoo-wrap',
+      envId: 'zc-cloudbase-7gbysfm74e2b2c22',
+      region: ''
+    }
+
+    if (false) {
+      const otherData = false
+      initData = Object.assign(initData, otherData)
+    }
+    
+    twikoo.init(initData)
+  }
+
+  const getCount = () => {
+    twikoo.getCommentsCount({
+      envId: 'zc-cloudbase-7gbysfm74e2b2c22',
+      region: '',
+      urls: [window.location.pathname],
+      includeReply: false
+    }).then(function (res) {
+      $countDom.innerText = res[0].count
+    }).catch(function (err) {
+      console.error(err);
+    });
+  }
+
+  const loadTwikoo = (bool = false) => {
+    if (typeof twikoo === 'object') {
+      init()
+      bool && $countDom && setTimeout(getCount,0)
+    } else {
+      getScript('https://cdn.jsdelivr.net/npm/twikoo/dist/twikoo.all.min.js').then(()=> {
+        init()
+        bool && $countDom && setTimeout(getCount,0)
+      })
+    }
+  }
+
+  if ('Twikoo' === 'Twikoo' || !false) {
+    if (false) btf.loadComment(document.getElementById('twikoo-wrap'), loadTwikoo)
+    else loadTwikoo(true)
+  } else {
+    window.loadOtherComment = () => {
+      loadTwikoo()
+    }
+  }
+})()</script></div><script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script><script src="https://cdn.jsdelivr.net/npm/vue@2.6.11"></script><script src="https://cdn.jsdelivr.net/gh/yremp/yremp-js@1.5/sakura.js"></script><script src="/js/title.js"></script><script src="/js/botui.js"></script><script data-pjax src="/js/botui_init.js"></script><script async src="/js/back.js"></script><script type="text/javascript" id="clstr_globe" src="//clustrmaps.com/globe.js?d=5V2tOKp8qAdRM-i8eu7ETTO9ugt5uKbbG-U7Yj8uMl8"></script><div class="aplayer no-destroy" data-id="000PeZCQ1i4XVs" data-server="tencent" data-type="artist" data-fixed="true" data-mini="true" data-listFolded="false" data-order="random" data-preload="none" data-autoplay="true" muted></div><script src="/js/chatra.js"></script><canvas class="fireworks" mobile="false"></canvas><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/dist/fireworks.min.js"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/dist/activate-power-mode.min.js"></script><script>POWERMODE.colorful = true;
+POWERMODE.shake = true;
+POWERMODE.mobile = false;
+document.body.addEventListener('input', POWERMODE);
+</script><script>(function(d, w, c) {
+    w.ChatraID = 'bJrdHqZM78fLH3i3H';
+    var s = d.createElement('script');
+    w[c] = w[c] || function() {
+        (w[c].q = w[c].q || []).push(arguments);
+    };
+    s.async = true;
+    s.src = 'https://call.chatra.io/chatra.js';
+    if (d.head) d.head.appendChild(s);
+})(document, window, 'Chatra');
+
+if (true) {
+  var chatBtnFn = () => {
+    var chatBtn = document.getElementById("chat_btn")
+    chatBtn.addEventListener("click", function(){
+      Chatra('openChat')
+    });
+  }
+  chatBtnFn()
+} else {
+  if (true) {
+    function chatBtnHide () {
+      Chatra('hide')
+    }
+    function chatBtnShow () {
+      Chatra('show')
+    }
+  }
+}</script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js"></script><script src="https://cdn.jsdelivr.net/gh/metowolf/MetingJS@1.2/dist/Meting.min.js"></script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = [
+  'title',
+  '#config-diff',
+  '#body-wrap',
+  '#rightside-config-hide',
+  '#rightside-config-show',
+  '.js-pjax'
+]
+
+if (false) {
+  pjaxSelectors.unshift('meta[property="og:image"]', 'meta[property="og:title"]', 'meta[property="og:url"]')
+}
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof chatBtnFn === 'function' && chatBtnFn()
+  typeof panguInit === 'function' && panguInit()
+
+  if (typeof gtag === 'function') {
+    gtag('config', '', {'page_path': window.location.pathname});
+  }
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // Analytics
+  if (false) {
+    MtaH5.pgv()
+  }
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+
+  typeof preloader === 'object' && preloader.endLoading()
+})
+
+
+document.addEventListener('pjax:send', function () {
+  typeof preloader === 'object' && preloader.initLoading()
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+})
+
+document.addEventListener('pjax:error', (e) => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div><script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"tagMode":false,"debug":false,"model":{"jsonPath":"/live2dw/assets/shizuku.model.json"},"display":{"position":"right","width":150,"height":300,"hOffset":20,"vOffset":-20},"mobile":{"show":false},"log":false,"pluginJsPath":"lib/","pluginModelPath":"assets/","pluginRootPath":"live2dw/"});</script></body></html>
