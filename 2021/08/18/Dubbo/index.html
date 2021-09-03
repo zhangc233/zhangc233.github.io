@@ -1,0 +1,549 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Dubbo | ZC的学习录</title><meta name="keywords" content="Dubbo"><meta name="author" content="zhangc233"><meta name="copyright" content="zhangc233"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="基础知识RPC是什么？RPC（Remote Procedure Call） 即远程过程调用。 为什么要 RPC ？ 因为，两个不同的服务器上的服务提供的方法不在一个内存空间，所以，需要通过网络编程才能传递方法调用所需要的参数，并且，方法调用的结果也需要通过网络编程来接收。但是，如果我们自己手动网络编程来实现这个调用过程的话工作量是非常大的，因为，我们需要考虑底层传输方式（TCP还是UDP）、序列化">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Dubbo">
+<meta property="og:url" content="https://zhangc233.github.io/2021/08/18/Dubbo/index.html">
+<meta property="og:site_name" content="ZC的学习录">
+<meta property="og:description" content="基础知识RPC是什么？RPC（Remote Procedure Call） 即远程过程调用。 为什么要 RPC ？ 因为，两个不同的服务器上的服务提供的方法不在一个内存空间，所以，需要通过网络编程才能传递方法调用所需要的参数，并且，方法调用的结果也需要通过网络编程来接收。但是，如果我们自己手动网络编程来实现这个调用过程的话工作量是非常大的，因为，我们需要考虑底层传输方式（TCP还是UDP）、序列化">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/zhangc233/pic@master/img/Dubbo.png">
+<meta property="article:published_time" content="2021-08-18T13:00:00.000Z">
+<meta property="article:modified_time" content="2021-09-02T10:23:37.120Z">
+<meta property="article:author" content="zhangc233">
+<meta property="article:tag" content="架构设计">
+<meta property="article:tag" content="注册中心">
+<meta property="article:tag" content="协议">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/zhangc233/pic@master/img/Dubbo.png"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js"></script><script src="https://cdn.jsdelivr.net/gh/metowolf/MetingJS@1.2/dist/Meting.min.js"></script><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://zhangc233.github.io/2021/08/18/Dubbo/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//hm.baidu.com"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><meta name="yandex-verification" content="{&quot;theme_color&quot;:{&quot;enable&quot;:true,&quot;main&quot;:&quot;#49B1F5&quot;,&quot;paginator&quot;:&quot;#00c4b6&quot;,&quot;button_hover&quot;:&quot;#FF7242&quot;,&quot;text_selection&quot;:&quot;#00c4b6&quot;,&quot;link_color&quot;:&quot;#99a9bf&quot;,&quot;meta_color&quot;:&quot;#858585&quot;,&quot;hr_color&quot;:&quot;#A4D8FA&quot;,&quot;code_foreground&quot;:&quot;#F47466&quot;,&quot;code_background&quot;:&quot;rgba(27, 31, 35, .05)&quot;,&quot;toc_color&quot;:&quot;#00c4b6&quot;,&quot;blockquote_padding_color&quot;:&quot;#49b1f5&quot;,&quot;blockquote_background_color&quot;:&quot;#49b1f5&quot;}}"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><script>var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?fbe67500831b74f989430bb8dbe1e7ca";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"search.xml","languages":{"hits_empty":"找不到您查询的内容：${query}"}},
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: {"limitCount":50,"languages":{"author":"作者: zhangc233","link":"链接: ","source":"来源: ZC的学习录","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。"}},
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#121212","position":"bottom-left"},
+  source: {
+    jQuery: 'https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js',
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/js/jquery.justifiedGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/css/justifiedGallery.min.css'
+    },
+    fancybox: {
+      js: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.css'
+    }
+  },
+  isPhotoFigcaption: true,
+  islazyload: false,
+  isanchor: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = { 
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2021-09-02 18:23:37'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          if (t === 'dark') activateDarkMode()
+          else if (t === 'light') activateLightMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const fontSizeVal = saveToLocal.get('global-font-size')
+    if (fontSizeVal !== undefined) {
+      document.documentElement.style.setProperty('--global-font-size', fontSizeVal + 'px')
+    }
+    })(window)</script><link rel="stylesheet" href="/css/Lete.css"><link rel="stylesheet" href="/css/card_botui.css" /><link rel="stylesheet" href="/css/iconfont.css" /><style type="text/css">#toggle-sidebar {bottom: 80px}</style><style type="text/css">#toggle-sidebar {left:100px}</style><meta name="generator" content="Hexo 5.4.0"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><div id="web_bg"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="author-avatar"><img class="avatar-img" src="/img/avatar.jpg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data"><div class="data-item is-center"><div class="data-item-link"><a href="/archives/"><div class="headline">文章</div><div class="length-num">53</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/tags/"><div class="headline">标签</div><div class="length-num">114</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/categories/"><div class="headline">分类</div><div class="length-num">20</div></a></div></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw iconfont  icon-shouye_huaban1"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw iconfont  icon-timeAxis"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw iconfont  icon-biaoqian_huaban1"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw iconfont  icon-quanbu"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="javascript:void(0);"><i class="fa-fw iconfont icon-yinle"></i><span> 生活</span><i class="fas fa-chevron-down expand"></i></a><ul class="menus_item_child"><li><a class="site-page" href="/music/"><i class="fa-fw iconfont  icon-yinle1"></i><span> 音乐</span></a></li><li><a class="site-page" href="/gallery/"><i class="fa-fw iconfont  icon-xiangce"></i><span> 相册</span></a></li><li><a class="site-page" href="/FilmAndTV/"><i class="fa-fw iconfont  icon-wodezhuifan"></i><span> 追番</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw iconfont  icon-lianjie-tianchong"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw iconfont  icon-guanyu1"></i><span> 关于我</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://cdn.jsdelivr.net/gh/zhangc233/pic@master/img/Dubbo.png')"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">ZC的学习录</a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw iconfont  icon-shouye_huaban1"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw iconfont  icon-timeAxis"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw iconfont  icon-biaoqian_huaban1"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw iconfont  icon-quanbu"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="javascript:void(0);"><i class="fa-fw iconfont icon-yinle"></i><span> 生活</span><i class="fas fa-chevron-down expand"></i></a><ul class="menus_item_child"><li><a class="site-page" href="/music/"><i class="fa-fw iconfont  icon-yinle1"></i><span> 音乐</span></a></li><li><a class="site-page" href="/gallery/"><i class="fa-fw iconfont  icon-xiangce"></i><span> 相册</span></a></li><li><a class="site-page" href="/FilmAndTV/"><i class="fa-fw iconfont  icon-wodezhuifan"></i><span> 追番</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw iconfont  icon-lianjie-tianchong"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw iconfont  icon-guanyu1"></i><span> 关于我</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">Dubbo</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2021-08-18T13:00:00.000Z" title="发表于 2021-08-18 21:00:00">2021-08-18</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2021-09-02T10:23:37.120Z" title="更新于 2021-09-02 18:23:37">2021-09-02</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Dubbo/">Dubbo</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">字数总计:</span><span class="word-count">7.6k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>25分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h2 id="基础知识"><a href="#基础知识" class="headerlink" title="基础知识"></a>基础知识</h2><h3 id="RPC是什么？"><a href="#RPC是什么？" class="headerlink" title="RPC是什么？"></a>RPC是什么？</h3><p><strong>RPC（Remote Procedure Call）</strong> 即远程过程调用。</p>
+<p><strong>为什么要 RPC ？</strong> 因为，两个不同的服务器上的服务提供的方法不在一个内存空间，所以，需要通过网络编程才能传递方法调用所需要的参数，并且，方法调用的结果也需要通过网络编程来接收。但是，如果我们自己手动网络编程来实现这个调用过程的话工作量是非常大的，因为，我们需要考虑底层传输方式（TCP还是UDP）、序列化方式等等方面。</p>
+<p>**RPC 能帮助我们做什么呢？ ** 简单来说，通过 RPC 可以帮助我们调用远程计算机上某个服务的方法，这个过程就像调用本地方法一样简单。并且！我们不需要了解底层网络编程的具体细节。</p>
+<p>一言蔽之：<strong>RPC 的出现就是为了让你调用远程方法像调用本地方法一样简单。</strong></p>
+<h3 id="RPC-的原理是什么"><a href="#RPC-的原理是什么" class="headerlink" title="RPC 的原理是什么?"></a>RPC 的原理是什么?</h3><ol>
+<li><p><strong>客户端（服务消费端）</strong> ：调用远程方法的一端。</p>
+</li>
+<li><p><strong>客户端 Stub（桩）</strong> ： 这其实就是一代理类。代理类主要做的事情很简单，就是把你调用方法、类、方法参数等信息传递到服务端。</p>
+</li>
+<li><p><strong>网络传输</strong> ： 网络传输就是你要把你调用的方法的信息比如说参数啊这些东西传输到服务端，然后服务端执行完之后再把返回结果通过网络传输给你传输回来。网络传输的实现方式有很多种比如最近基本的 Socket或者性能以及封装更加优秀的 Netty（推荐）。</p>
+</li>
+<li><p><strong>服务端 Stub（桩）</strong> ：这个桩就不是代理类了。我觉得理解为桩实际不太好，大家注意一下就好。这里的服务端 Stub 实际指的就是接收到客户端执行方法的请求后，去指定对应的方法然后返回结果给客户端的类。</p>
+</li>
+<li><p><strong>服务端（服务提供端）</strong> ：提供远程方法的一端。</p>
+<p>具体原理图如下，</p>
+</li>
+</ol>
+<p><img src="https://cdn.jsdelivr.net/gh/zhangc233/pic@master/img/37345851.jpg"></p>
+<ol>
+<li>服务消费端（client）以本地调用的方式调用远程服务；</li>
+<li>客户端 Stub（client stub） 接收到调用后负责将方法、参数等组装成能够进行网络传输的消息体（序列化）：<code>RpcRequest</code>；</li>
+<li>客户端 Stub（client stub） 找到远程服务的地址，并将消息发送到服务提供端；</li>
+<li>服务端 Stub（桩）收到消息将消息反序列化为Java对象: <code>RpcRequest</code>；</li>
+<li>服务端 Stub（桩）根据<code>RpcRequest</code>中的类、方法、方法参数等信息调用本地的方法；</li>
+<li>服务端 Stub（桩）得到方法执行结果并将组装成能够进行网络传输的消息体：<code>RpcResponse</code>（序列化）发送至消费方；</li>
+<li>客户端 Stub（client stub）接收到消息并将消息反序列化为Java对象:<code>RpcResponse</code> ，这样也就得到了最终结果。over!</li>
+</ol>
+<h3 id="Dubbo-是什么？"><a href="#Dubbo-是什么？" class="headerlink" title="Dubbo 是什么？"></a>Dubbo 是什么？</h3><p>Dubbo 是一款高性能、轻量级的开源 RPC 框架，提供服务自动注册、自动发现等高效服务治理方案， 可以和 Spring 框架无缝集成。Dubbo 提供了六大核心能力：</p>
+<ol>
+<li>面向接口代理的高性能RPC调用</li>
+<li>智能容错和负载均衡。</li>
+<li>服务自动注册和发现</li>
+<li>高度可扩展能力</li>
+<li>运行期流量调度</li>
+<li>可视化的服务治理与运维 </li>
+</ol>
+<p><img src="https://cdn.jsdelivr.net/gh/zhangc233/pic@master/img/image-20210902173457123.png"></p>
+<h3 id="为什么要用-Dubbo？"><a href="#为什么要用-Dubbo？" class="headerlink" title="为什么要用 Dubbo？"></a>为什么要用 Dubbo？</h3><p>随着互联网的发展，网站的规模越来越大，用户数量越来越多。单一应用架构 、垂直应用架构无法满足我们的需求，这个时候分布式服务架构就诞生了。</p>
+<p>分布式服务架构下，系统被拆分成不同的服务比如短信服务、安全服务，每个服务独立提供系统的某个核心服务。</p>
+<p>我们可以使用 Java RMI（Java Remote Method Invocation）、Hessian这种支持远程调用的框架来简单地暴露和引用远程服务。但是！当服务越来越多之后，服务调用关系越来越复杂。当应用访问压力越来越大后，负载均衡以及服务监控的需求也迫在眉睫。我们可以用 F5 这类硬件来做负载均衡，但这样增加了成本，并且存在单点故障的风险。<strong>Dubbo 帮助我们解决了什么问题呢？</strong></p>
+<ul>
+<li>透明化的远程方法调用：就像调用本地方法一样调用远程方法，只需简单配置，没有任何API侵入；</li>
+<li>软负载均衡及容错机制：可在内网替代 F5 等硬件负载均衡器，降低成本，减少单点故障；</li>
+<li>服务自动注册与发现：不再需要写死服务提供方地址，注册中心基于接口名查询服务提供者的IP地址，并且能够平滑添加或删除服务提供者。</li>
+</ul>
+<p><img src="https://cdn.jsdelivr.net/gh/zhangc233/pic@master/img/43050183.jpg"></p>
+<h2 id="架构设计"><a href="#架构设计" class="headerlink" title="架构设计"></a>架构设计</h2><h3 id="Dubbo-核心组件有哪些？"><a href="#Dubbo-核心组件有哪些？" class="headerlink" title="Dubbo 核心组件有哪些？"></a>Dubbo 核心组件有哪些？</h3><p><img src="https://cdn.jsdelivr.net/gh/zhangc233/pic@master/img/image-20210902161114047.png"></p>
+<ul>
+<li><strong>Container：</strong> 服务运行容器，负责加载、运行服务提供者。必须。</li>
+<li><strong>Provider：</strong> 暴露服务的服务提供方，会向注册中心注册自己提供的服务。必须。</li>
+<li><strong>Consumer：</strong> 调用远程服务的服务消费方，会向注册中心订阅自己所需的服务。必须。</li>
+<li><strong>Registry：</strong> 服务注册与发现的注册中心。注册中心会返回服务提供者地址列表给消费者。非必须。</li>
+<li><strong>Monitor：</strong> 统计服务的调用次数和调用时间的监控中心。服务消费者和提供者会定时发送统计数据到监控中心。 非必须。</li>
+</ul>
+<h3 id="Dubbo-服务器注册与发现的流程"><a href="#Dubbo-服务器注册与发现的流程" class="headerlink" title="Dubbo 服务器注册与发现的流程"></a>Dubbo 服务器注册与发现的流程</h3><ol>
+<li><strong>服务容器Container</strong>负责启动，加载，运行服务提供者；</li>
+<li><strong>服务提供者Provider</strong>在启动时，向注册中心注册自己提供的服务；</li>
+<li><strong>服务消费者Consumer</strong>在启动时，向注册中心订阅自己所需的服务；</li>
+<li><strong>注册中心Registry</strong>返回服务提供者地址列表给消费者，如果有变更，注册中心将基于长连接推送变更数据给消费者；</li>
+<li><strong>服务消费者Consumer</strong>，从提供者地址列表中，基于软负载均衡算法，选一台提供者进行调用，如果调用失败，再选另一台调用；</li>
+<li><strong>服务消费者Consumer和提供者Provider</strong>，在内存中累计调用次数和调用时间，定时每分钟发送一次统计数据到监控中心Monitor。</li>
+</ol>
+<h3 id="Dubbo-的整体架构设计有哪些分层"><a href="#Dubbo-的整体架构设计有哪些分层" class="headerlink" title="Dubbo 的整体架构设计有哪些分层?"></a>Dubbo 的整体架构设计有哪些分层?</h3><p><img src="https://cdn.jsdelivr.net/gh/zhangc233/pic@master/img/20200316095208388.png"></p>
+<p><strong>接口服务层（Service）</strong>：该层与业务逻辑相关，根据 provider 和 consumer 的业务设计对应的接口和实现</p>
+<p><strong>配置层（Config）</strong>：对外配置接口，以 ServiceConfig 和 ReferenceConfig 为中心</p>
+<p><strong>服务代理层（Proxy）</strong>：服务接口透明代理，生成服务的客户端 Stub 和 服务端的 Skeleton，以 ServiceProxy 为中心，扩展接口为 ProxyFactory</p>
+<p><strong>服务注册层（Registry）</strong>：封装服务地址的注册和发现，以服务 URL 为中心，扩展接口为 RegistryFactory、Registry、RegistryService</p>
+<p><strong>路由层（Cluster）</strong>：封装多个提供者的路由和负载均衡，并桥接注册中心，以Invoker 为中心，扩展接口为 Cluster、Directory、Router 和 LoadBlancce。</p>
+<p><strong>监控层（Monitor）</strong>：RPC 调用次数和调用时间监控，以 Statistics 为中心，扩展接口为 MonitorFactory、Monitor 和 MonitorService</p>
+<p><strong>远程调用层（Protocal）</strong>：封装 RPC 调用，以 Invocation 和 Result 为中心，扩展接口为 Protocal、Invoker 和 Exporter</p>
+<p><strong>信息交换层（Exchange）</strong>：封装请求响应模式，同步转异步。以 Request 和Response 为中心，扩展接口为 Exchanger、ExchangeChannel、ExchangeClient 和 ExchangeServer</p>
+<p><strong>网络传输 层（Transport）</strong>：抽象 mina 和 netty 为统一接口，以 Message 为中心，扩展接口为 Channel、Transporter、Client、Server 和 Codec</p>
+<p><strong>数据序列化层（Serialize）</strong>：可复用的一些工具，扩展接口为 Serialization、ObjectInput、ObjectOutput 和 ThreadPool</p>
+<h3 id="Dubbo-中的-Invoker-概念了解么？"><a href="#Dubbo-中的-Invoker-概念了解么？" class="headerlink" title="Dubbo 中的 Invoker 概念了解么？"></a>Dubbo 中的 Invoker 概念了解么？</h3><p>Invoker 是 Dubbo 领域模型中非常重要的一个概念，你如果阅读过 Dubbo 源码的话，你会无数次看到它。就比如下面要说的负载均衡这块的源码中就有大量 Invoker 的身影。简单来说，Invoker 就是 Dubbo 对远程调用的抽象。</p>
+<p><img src="https://cdn.jsdelivr.net/gh/zhangc233/pic@master/img/dubbo_rpc_invoke.jpg"></p>
+<p>按照 Dubbo 官方的话来说，Invoker 分为：</p>
+<ul>
+<li>服务提供 Invoker</li>
+<li>服务消费 Invoker</li>
+</ul>
+<p>假如我们需要调用一个远程方法，我们需要动态代理来屏蔽远程调用的细节吧！我们屏蔽掉的这些细节就依赖对应的 Invoker实现， Invoker实现了真正的远程服务调用。</p>
+<h3 id="Dubbo-Monitor-实现原理？"><a href="#Dubbo-Monitor-实现原理？" class="headerlink" title="Dubbo Monitor 实现原理？"></a>Dubbo Monitor 实现原理？</h3><p>Consumer 端在发起调用之前会先走 filter 链；provider 端在接收到请求时也是先走 filter 链，然后才进行真正的业务逻辑处理。默认情况下，在 consumer 和 provider 的 filter 链中都会有 Monitorfilter。</p>
+<ol>
+<li>MonitorFilter 向 DubboMonitor 发送数据；</li>
+<li>DubboMonitor 将数据进行聚合后（默认聚合 1min 中的统计数据）暂存到ConcurrentMap&lt;Statistics, AtomicReference&gt; statisticsMap，然后使用一个含有 3 个线程（线程名字：DubboMonitorSendTimer）的线程池每隔 1min 钟，调用 SimpleMonitorService 遍历发送 statisticsMap 中的统计数据，每发送完毕一个，就重置当前的 Statistics 的 AtomicReference；</li>
+<li>SimpleMonitorService 将这些聚合数据塞入 BlockingQueue queue 中（队列大小为 100000）；</li>
+<li>SimpleMonitorService 使用一个后台线程（线程名为：DubboMonitorAsyncWriteLogThread）将 queue 中的数据写入文件（该线程以死循环的形式来写）；</li>
+<li>SimpleMonitorService 还会使用一个含有 1 个线程（线程名字：DubboMonitorTimer）的线程池每隔 5min 钟，将文件中的统计数据画成图表。</li>
+</ol>
+<h3 id="Dubbo提供的线程模型"><a href="#Dubbo提供的线程模型" class="headerlink" title="Dubbo提供的线程模型"></a>Dubbo提供的线程模型</h3><ul>
+<li><strong>all：</strong>所有消息都派发到线程池，包括请求，响应，连接事件，断开事件，心跳等。</li>
+<li><strong>direct：</strong>所有消息都不派发到线程池，全部在 IO 线程上直接执行。</li>
+<li><strong>execution：</strong>只请求消息派发到线程池，不含响应，响应和其它连接断开事件，心跳等消息，直接在 IO 线程上执行。</li>
+<li><strong>connection：</strong>在 IO 线程上，将连接断开事件放入队列，有序逐个执行，其它消息派发到线程池。</li>
+</ul>
+<h3 id="服务提供方实现类到Invoker的转换"><a href="#服务提供方实现类到Invoker的转换" class="headerlink" title="服务提供方实现类到Invoker的转换"></a>服务提供方实现类到Invoker的转换</h3><p><img src="https://cdn.jsdelivr.net/gh/zhangc233/pic@master/img/image-20210902172103591.png"></p>
+<p>服务提供方实现类到Invoker的转换,是通过 ProxyFactory 类的 getInvoker 方法使用 服务实现类 生成一个AbstractProxyInvoker 实例，其中使用wrapper类消除反射，提高性能。</p>
+<h3 id="服务提供方Invoker到Exporter的转换"><a href="#服务提供方Invoker到Exporter的转换" class="headerlink" title="服务提供方Invoker到Exporter的转换"></a>服务提供方Invoker到Exporter的转换</h3><p>服务提供方实现Invoker到Exporter的转换,主要是打开创建一个Netty Server 侦听服务，并接收客户端发来的各种请求，通讯细节由 Dubbo 自己实现，然后注册服务到服务注册中心。</p>
+<h3 id="服务消费方远程服务到Invoker的转换"><a href="#服务消费方远程服务到Invoker的转换" class="headerlink" title="服务消费方远程服务到Invoker的转换"></a>服务消费方远程服务到Invoker的转换</h3><p><img src="https://cdn.jsdelivr.net/gh/zhangc233/pic@master/img/image-20210902172307943.png"></p>
+<p>服务消费方远程服务到Invoker的转换,是通过 ReferenceConfig 类的 init 方法调用 Protocol 的 refer 方法生成 Invoker 实例，这是服务消费的关键。</p>
+<h3 id="服务消费方Invoker到客户端接口的转换"><a href="#服务消费方Invoker到客户端接口的转换" class="headerlink" title="服务消费方Invoker到客户端接口的转换"></a>服务消费方Invoker到客户端接口的转换</h3><p>服务消费方远程服务到Invoker的转换,是通过 ReferenceConfig 类的 init 方法调用 Protocol 的 refer 方法生成 Invoker 实例，这是服务消费的关键。</p>
+<h2 id="分布式框架"><a href="#分布式框架" class="headerlink" title="分布式框架"></a>分布式框架</h2><h3 id="Dubbo-类似的分布式框架还有哪些？"><a href="#Dubbo-类似的分布式框架还有哪些？" class="headerlink" title="Dubbo 类似的分布式框架还有哪些？"></a>Dubbo 类似的分布式框架还有哪些？</h3><p>比较著名的就是 Spring Cloud。</p>
+<h3 id="Dubbo-和-Spring-Cloud-有什么关系？"><a href="#Dubbo-和-Spring-Cloud-有什么关系？" class="headerlink" title="Dubbo 和 Spring Cloud 有什么关系？"></a>Dubbo 和 Spring Cloud 有什么关系？</h3><p>Dubbo 是 SOA 时代的产物，它的关注点主要在于服务的调用，流量分发、流量监控和熔断。而 Spring Cloud 诞生于微服务架构时代，考虑的是微服务治理的方方面面，另外由于依托了 Spring、Spring Boot 的优势之上，两个框架在开始目标就不一致，Dubbo 定位服务治理、Spring Cloud 是打造一个生态。</p>
+<h3 id="Dubbo-和-Spring-Cloud-有什么哪些区别？"><a href="#Dubbo-和-Spring-Cloud-有什么哪些区别？" class="headerlink" title="Dubbo 和 Spring Cloud 有什么哪些区别？"></a>Dubbo 和 Spring Cloud 有什么哪些区别？</h3><ul>
+<li><p>Dubbo 底层是使用 Netty 这样的 NIO 框架，是基于 TCP 协议传输的，配合以 Hession 序列化完成 RPC 通信。</p>
+</li>
+<li><p>Spring Cloud 是基于 Http 协议 Rest 接口调用远程过程的通信，相对来说 Http 请求会有更大的报文，占的带宽也会更多。但是REST 相比 RPC 更为灵活，服务提供方和调用方的依赖只依靠一纸契约，不存在代码级别的强依赖，这在强调快速演化的微服务环境下，显得更为合适，至于注重通信速度还是方便灵活性，具体情况具体考虑。</p>
+</li>
+</ul>
+<h2 id="注册中心"><a href="#注册中心" class="headerlink" title="注册中心"></a>注册中心</h2><h3 id="Dubbo-有哪些注册中心？"><a href="#Dubbo-有哪些注册中心？" class="headerlink" title="Dubbo 有哪些注册中心？"></a>Dubbo 有哪些注册中心？</h3><ul>
+<li><strong>Multicast 注册中心：</strong>Multicast 注册中心不需要任何中心节点，只要广播地址，就能进行服务注册和发现，基于网络中组播传输实现。</li>
+<li><strong>Zookeeper 注册中心：</strong>基于分布式协调系统 Zookeeper 实现，采用 Zookeeper 的 watch 机制实现数据变更。（推荐）</li>
+<li><strong>Redis 注册中心：</strong>基于 Redis 实现，采用 key/map 存储，key 存储服务名和类型，map 中 key 存储服务 url，value 服务过期时间。基于 Redis 的发布/订阅模式通知数据变更。</li>
+<li>Simple 注册中心。</li>
+</ul>
+<h3 id="Dubbo-的注册中心集群挂掉，发布者和订阅者之间还能通信么？"><a href="#Dubbo-的注册中心集群挂掉，发布者和订阅者之间还能通信么？" class="headerlink" title="Dubbo 的注册中心集群挂掉，发布者和订阅者之间还能通信么？"></a>Dubbo 的注册中心集群挂掉，发布者和订阅者之间还能通信么？</h3><p>可以通讯。启动 Dubbo 时，消费者会从 Zookeeper 拉取注册的生产者的地址接口等数据，缓存在本地。每次调用时，按照本地存储的地址进行调用。</p>
+<h2 id="集群"><a href="#集群" class="headerlink" title="集群"></a>集群</h2><h3 id="Dubbo集群提供了哪些负载均衡策略？"><a href="#Dubbo集群提供了哪些负载均衡策略？" class="headerlink" title="Dubbo集群提供了哪些负载均衡策略？"></a>Dubbo集群提供了哪些负载均衡策略？</h3><p>在集群负载均衡时，Dubbo 提供了多种均衡策略，默认为 <code>random</code> 随机调用。我们还可以自行扩展负载均衡策略（参考Dubbo SPI机制）。</p>
+<p>在 Dubbo 中，所有负载均衡实现类均继承自 <code>AbstractLoadBalance</code>，该类实现了 <code>LoadBalance</code> 接口，并封装了一些公共的逻辑。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="class"><span class="keyword">class</span> <span class="title">AbstractLoadBalance</span> <span class="keyword">implements</span> <span class="title">LoadBalance</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">calculateWarmupWeight</span><span class="params">(<span class="keyword">int</span> uptime, <span class="keyword">int</span> warmup, <span class="keyword">int</span> weight)</span> </span>&#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> &lt;T&gt; <span class="function">Invoker&lt;T&gt; <span class="title">select</span><span class="params">(List&lt;Invoker&lt;T&gt;&gt; invokers, URL url, Invocation invocation)</span> </span>&#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">protected</span> <span class="keyword">abstract</span> &lt;T&gt; <span class="function">Invoker&lt;T&gt; <span class="title">doSelect</span><span class="params">(List&lt;Invoker&lt;T&gt;&gt; invokers, URL url, Invocation invocation)</span></span>;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">int</span> <span class="title">getWeight</span><span class="params">(Invoker&lt;?&gt; invoker, Invocation invocation)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>AbstractLoadBalance</code> 的实现类有下面这些：</p>
+<p><img src="https://guide-blog-images.oss-cn-shenzhen.aliyuncs.com/java-guide-blog/image-20210326105257812.png" alt="img"></p>
+<h4 id="RandomLoadBalance"><a href="#RandomLoadBalance" class="headerlink" title="RandomLoadBalance"></a>RandomLoadBalance</h4><p>根据权重随机选择（对加权随机算法的实现）。这是Dubbo默认采用的一种负载均衡策略。</p>
+<p><code>RandomLoadBalance</code> 具体的实现原理非常简单，假如有两个提供相同服务的服务器 S1,S2，S1的权重为7，S2的权重为3。我们把这些权重值分布在坐标区间会得到：S1-&gt;[0, 7) ，S2-&gt;(7, 10]。我们生成[0, 10) 之间的随机数，随机数落到对应的区间，我们就选择对应的服务器来处理请求。</p>
+<p><code>RandomLoadBalance</code> 的源码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">RandomLoadBalance</span> <span class="keyword">extends</span> <span class="title">AbstractLoadBalance</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String NAME = <span class="string">&quot;random&quot;</span>;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">protected</span> &lt;T&gt; <span class="function">Invoker&lt;T&gt; <span class="title">doSelect</span><span class="params">(List&lt;Invoker&lt;T&gt;&gt; invokers, URL url, Invocation invocation)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">int</span> length = invokers.size();</span><br><span class="line">        <span class="keyword">boolean</span> sameWeight = <span class="keyword">true</span>;</span><br><span class="line">        <span class="keyword">int</span>[] weights = <span class="keyword">new</span> <span class="keyword">int</span>[length]; </span><br><span class="line">        <span class="keyword">int</span> totalWeight = <span class="number">0</span>;</span><br><span class="line">        <span class="comment">// 下面这个for循环的主要作用就是计算所有该服务的提供者的权重之和 totalWeight（），</span></span><br><span class="line">        <span class="comment">// 除此之外，还会检测每个服务提供者的权重是否相同</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; length; i++) &#123;</span><br><span class="line">            <span class="keyword">int</span> weight = getWeight(invokers.get(i), invocation);</span><br><span class="line">            totalWeight += weight;</span><br><span class="line">            weights[i] = totalWeight;</span><br><span class="line">            <span class="keyword">if</span> (sameWeight &amp;&amp; totalWeight != weight * (i + <span class="number">1</span>)) &#123;</span><br><span class="line">                sameWeight = <span class="keyword">false</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (totalWeight &gt; <span class="number">0</span> &amp;&amp; !sameWeight) &#123;</span><br><span class="line">            <span class="comment">// 随机生成一个 [0, totalWeight) 区间内的数字</span></span><br><span class="line">            <span class="keyword">int</span> offset = ThreadLocalRandom.current().nextInt(totalWeight);</span><br><span class="line">            <span class="comment">// 判断会落在哪个服务提供者的区间</span></span><br><span class="line">            <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; length; i++) &#123;</span><br><span class="line">                <span class="keyword">if</span> (offset &lt; weights[i]) &#123;</span><br><span class="line">                    <span class="keyword">return</span> invokers.get(i);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">  </span><br><span class="line">        <span class="keyword">return</span> invokers.get(ThreadLocalRandom.current().nextInt(length));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="LeastActiveLoadBalance"><a href="#LeastActiveLoadBalance" class="headerlink" title="LeastActiveLoadBalance"></a>LeastActiveLoadBalance</h4><p><code>LeastActiveLoadBalance</code> 直译过来就是<strong>最小活跃数负载均衡</strong>。解释：初始状态下所有服务提供者的活跃数均为 0（每个服务提供者的中特定方法都对应一个活跃数），每收到一个请求后，对应的服务提供者的活跃数 +1，当这个请求处理完之后，活跃数 -1。</p>
+<p>因此，<strong>Dubbo 认为谁的活跃数越少，谁的处理速度就越快，性能也越好，这样的话，就优先把请求给活跃数少的服务提供者处理。</strong></p>
+<p>但是<strong>如果有多个服务提供者的活跃数相等怎么办？</strong></p>
+<p>很简单，那就再走一遍 <code>RandomLoadBalance</code> 。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">LeastActiveLoadBalance</span> <span class="keyword">extends</span> <span class="title">AbstractLoadBalance</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String NAME = <span class="string">&quot;leastactive&quot;</span>;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">protected</span> &lt;T&gt; <span class="function">Invoker&lt;T&gt; <span class="title">doSelect</span><span class="params">(List&lt;Invoker&lt;T&gt;&gt; invokers, URL url, Invocation invocation)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">int</span> length = invokers.size();</span><br><span class="line">        <span class="keyword">int</span> leastActive = -<span class="number">1</span>;</span><br><span class="line">        <span class="keyword">int</span> leastCount = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">int</span>[] leastIndexes = <span class="keyword">new</span> <span class="keyword">int</span>[length];</span><br><span class="line">        <span class="keyword">int</span>[] weights = <span class="keyword">new</span> <span class="keyword">int</span>[length];</span><br><span class="line">        <span class="keyword">int</span> totalWeight = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">int</span> firstWeight = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">boolean</span> sameWeight = <span class="keyword">true</span>;</span><br><span class="line">        <span class="comment">// 这个 for 循环的主要作用是遍历 invokers 列表，找出活跃数最小的 Invoker</span></span><br><span class="line">        <span class="comment">// 如果有多个 Invoker 具有相同的最小活跃数，还会记录下这些 Invoker 在 invokers 集合中的下标，并累加它们的权重，比较它们的权重值是否相等</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; length; i++) &#123;</span><br><span class="line">            Invoker&lt;T&gt; invoker = invokers.get(i);</span><br><span class="line">            <span class="comment">// 获取 invoker 对应的活跃(active)数</span></span><br><span class="line">            <span class="keyword">int</span> active = RpcStatus.getStatus(invoker.getUrl(), invocation.getMethodName()).getActive();</span><br><span class="line">            <span class="keyword">int</span> afterWarmup = getWeight(invoker, invocation);</span><br><span class="line">            weights[i] = afterWarmup;</span><br><span class="line">            <span class="keyword">if</span> (leastActive == -<span class="number">1</span> || active &lt; leastActive) &#123;</span><br><span class="line">                leastActive = active;</span><br><span class="line">                leastCount = <span class="number">1</span>;</span><br><span class="line">                leastIndexes[<span class="number">0</span>] = i;</span><br><span class="line">                totalWeight = afterWarmup;</span><br><span class="line">                firstWeight = afterWarmup;</span><br><span class="line">                sameWeight = <span class="keyword">true</span>;</span><br><span class="line">            &#125; <span class="keyword">else</span> <span class="keyword">if</span> (active == leastActive) &#123;</span><br><span class="line">                leastIndexes[leastCount++] = i;</span><br><span class="line">                totalWeight += afterWarmup;</span><br><span class="line">                <span class="keyword">if</span> (sameWeight &amp;&amp; afterWarmup != firstWeight) &#123;</span><br><span class="line">                    sameWeight = <span class="keyword">false</span>;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">       <span class="comment">// 如果只有一个 Invoker 具有最小的活跃数，此时直接返回该 Invoker 即可</span></span><br><span class="line">        <span class="keyword">if</span> (leastCount == <span class="number">1</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span> invokers.get(leastIndexes[<span class="number">0</span>]);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 如果有多个 Invoker 具有相同的最小活跃数，但它们之间的权重不同</span></span><br><span class="line">        <span class="comment">// 这里的处理方式就和  RandomLoadBalance 一致了</span></span><br><span class="line">        <span class="keyword">if</span> (!sameWeight &amp;&amp; totalWeight &gt; <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="keyword">int</span> offsetWeight = ThreadLocalRandom.current().nextInt(totalWeight);</span><br><span class="line">            <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; leastCount; i++) &#123;</span><br><span class="line">                <span class="keyword">int</span> leastIndex = leastIndexes[i];</span><br><span class="line">                offsetWeight -= weights[leastIndex];</span><br><span class="line">                <span class="keyword">if</span> (offsetWeight &lt; <span class="number">0</span>) &#123;</span><br><span class="line">                    <span class="keyword">return</span> invokers.get(leastIndex);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> invokers.get(leastIndexes[ThreadLocalRandom.current().nextInt(leastCount)]);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>活跃数是通过 <code>RpcStatus</code> 中的一个 <code>ConcurrentMap</code> 保存的，根据 URL 以及服务提供者被调用的方法的名称，我们便可以获取到对应的活跃数。也就是说服务提供者中的每一个方法的活跃数都是互相独立的。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">RpcStatus</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> ConcurrentMap&lt;String, ConcurrentMap&lt;String, RpcStatus&gt;&gt; METHOD_STATISTICS =</span><br><span class="line">            <span class="keyword">new</span> ConcurrentHashMap&lt;String, ConcurrentMap&lt;String, RpcStatus&gt;&gt;();</span><br><span class="line"></span><br><span class="line">   <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> RpcStatus <span class="title">getStatus</span><span class="params">(URL url, String methodName)</span> </span>&#123;</span><br><span class="line">        String uri = url.toIdentityString();</span><br><span class="line">        ConcurrentMap&lt;String, RpcStatus&gt; map = METHOD_STATISTICS.computeIfAbsent(uri, k -&gt; <span class="keyword">new</span> ConcurrentHashMap&lt;&gt;());</span><br><span class="line">        <span class="keyword">return</span> map.computeIfAbsent(methodName, k -&gt; <span class="keyword">new</span> RpcStatus());</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">getActive</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> active.get();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="ConsistentHashLoadBalance"><a href="#ConsistentHashLoadBalance" class="headerlink" title="ConsistentHashLoadBalance"></a>ConsistentHashLoadBalance</h4><p><code>ConsistentHashLoadBalance</code> 即<strong>一致性Hash负载均衡策略</strong>。 <code>ConsistentHashLoadBalance</code> 中没有权重的概念，具体是哪个服务提供者处理请求是由你的请求的参数决定的，也就是说相同参数的请求总是发到同一个服务提供者。</p>
+<p><img src="https://cdn.jsdelivr.net/gh/zhangc233/pic@master/img/image-20210902180839103.png"></p>
+<p>另外，Dubbo 为了避免数据倾斜问题（节点不够分散，大量请求落到同一节点），还引入了虚拟节点的概念。通过虚拟节点可以让节点更加分散，有效均衡各个节点的请求量。</p>
+<p><img src="https://cdn.jsdelivr.net/gh/zhangc233/pic@master/img/image-20210902180851458.png"></p>
+<h4 id="RoundRobinLoadBalance"><a href="#RoundRobinLoadBalance" class="headerlink" title="RoundRobinLoadBalance"></a>RoundRobinLoadBalance</h4><p>RoundRobinLoadBalance 即加权轮询负载均衡。轮询就是把请求依次分配给每个服务提供者。加权轮询就是在轮询的基础上，让更多的请求落到权重更大的服务提供者上。比如假如有两个提供相同服务的服务器 S1,S2，S1的权重为7，S2的权重为3。</p>
+<p>如果有 10 次请求，那么 7 次会被 S1处理，3次被 S2处理。但是，如果是 <code>RandomLoadBalance</code> 的话，很可能存在10次请求有9次都被 S1 处理的情况（概率性问题）。</p>
+<h3 id="Dubbo的集群容错方案有哪些？"><a href="#Dubbo的集群容错方案有哪些？" class="headerlink" title="Dubbo的集群容错方案有哪些？"></a>Dubbo的集群容错方案有哪些？</h3><ul>
+<li>Failover Cluster：失败自动切换，当出现失败，重试其它服务器。通常用于读操作，但重试会带来更长延迟。（默认）</li>
+<li>Failfast Cluster：快速失败，只发起一次调用，失败立即报错。通常用于非幂等性的写操作，比如新增记录。</li>
+<li>Failsafe Cluster：失败安全，出现异常时，直接忽略。通常用于写入审计日志等操作。</li>
+<li>Failback Cluster：失败自动恢复，后台记录失败请求，定时重发。通常用于消息通知操作。</li>
+<li>Forking Cluster：并行调用多个服务器，只要一个成功即返回。通常用于实时性要求较高的读操作，但需要浪费更多服务资源。可通过 forks=”2″ 来设置最大并行数。</li>
+<li>Broadcast Cluster：广播调用所有提供者，逐个调用，任意一台报错则报错 。通常用于通知所有提供者更新缓存或日志等本地资源信息。</li>
+</ul>
+<h2 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h2><h3 id="Dubbo-配置文件是如何加载到-Spring-中的？"><a href="#Dubbo-配置文件是如何加载到-Spring-中的？" class="headerlink" title="Dubbo 配置文件是如何加载到 Spring 中的？"></a>Dubbo 配置文件是如何加载到 Spring 中的？</h3><p>Spring 容器在启动的时候，会读取到 Spring 默认的一些 schema 以及 Dubbo 自定义的 schema，每个 schema 都会对应一个自己的 NamespaceHandler，NamespaceHandler 里面通过 BeanDefinitionParser 来解析配置信息并转化为需要加载的 bean 对象！</p>
+<h3 id="说说核心的配置有哪些？"><a href="#说说核心的配置有哪些？" class="headerlink" title="说说核心的配置有哪些？"></a>说说核心的配置有哪些？</h3><p><img src="https://cdn.jsdelivr.net/gh/zhangc233/pic@master/img/2020031609550130.png"></p>
+<h3 id="Dubbo-超时设置有哪些方式？"><a href="#Dubbo-超时设置有哪些方式？" class="headerlink" title="Dubbo 超时设置有哪些方式？"></a>Dubbo 超时设置有哪些方式？</h3><ul>
+<li>服务提供者端设置超时时间，在Dubbo的用户文档中，推荐如果能在服务端多配置就尽量多配置，因为服务提供者比消费者更清楚自己提供的服务特性。</li>
+<li>服务消费者端设置超时时间，如果在消费者端设置了超时时间，以消费者端为主，即优先级更高。因为服务调用方设置超时时间控制性更灵活。如果消费方超时，服务端线程不会定制，会产生警告。</li>
+</ul>
+<p><strong>服务调用超时会怎么样？</strong>dubbo 在调用服务不成功时，默认是会重试两次。</p>
+<h2 id="协议"><a href="#协议" class="headerlink" title="协议"></a>协议</h2><h3 id="Dubbo-使用的是什么通信框架"><a href="#Dubbo-使用的是什么通信框架" class="headerlink" title="Dubbo 使用的是什么通信框架?"></a>Dubbo 使用的是什么通信框架?</h3><p>默认使用 Netty 作为通讯框架。</p>
+<h3 id="Dubbo-支持哪些通信协议，它们的优缺点有哪些？"><a href="#Dubbo-支持哪些通信协议，它们的优缺点有哪些？" class="headerlink" title="Dubbo 支持哪些通信协议，它们的优缺点有哪些？"></a>Dubbo 支持哪些通信协议，它们的优缺点有哪些？</h3><ul>
+<li>Dubbo： 单一长连接和 NIO 异步通讯，适合大并发小数据量的服务调用，以及消费者远大于提供者。传输协议 TCP，异步 Hessian 序列化。Dubbo推荐使用dubbo协议。</li>
+<li>RMI： 采用 JDK 标准的 RMI 协议实现，传输参数和返回参数对象需要实现 Serializable 接口，使用 Java 标准序列化机制，使用阻塞式短连接，传输数据包大小混合，消费者和提供者个数差不多，可传文件，传输协议 TCP。 多个短连接 TCP 协议传输，同步传输，适用常规的远程服务调用和 RMI 互操作。在依赖低版本的 Common-Collections 包，Java 序列化存在安全漏洞。</li>
+<li>WebService：基于 WebService 的远程调用协议，集成 CXF 实现，提供和原生 WebService 的互操作。多个短连接，基于 HTTP 传输，同步传输，适用系统集成和跨语言调用。</li>
+<li>HTTP： 基于 Http 表单提交的远程调用协议，使用 Spring 的 HttpInvoke 实现。多个短连接，传输协议 HTTP，传入参数大小混合，提供者个数多于消费者，需要给应用程序和浏览器 JS 调用。</li>
+<li>Hessian：集成 Hessian 服务，基于 HTTP 通讯，采用 Servlet 暴露服务，Dubbo 内嵌 Jetty 作为服务器时默认实现，提供与 Hession 服务互操作。多个短连接，同步 HTTP 传输，Hessian 序列化，传入参数较大，提供者大于消费者，提供者压力较大，可传文件。</li>
+<li>Memcache：基于 Memcache实现的 RPC 协议。</li>
+<li>Redis：基于 Redis 实现的RPC协议。</li>
+</ul>
+<h3 id="Dubbo-支持哪些序列化方式呢？"><a href="#Dubbo-支持哪些序列化方式呢？" class="headerlink" title="Dubbo 支持哪些序列化方式呢？"></a>Dubbo 支持哪些序列化方式呢？</h3><p> <img src="https://cdn.jsdelivr.net/gh/zhangc233/pic@master/img/image-20210902175754043.png"></p>
+<p>Dubbo 支持多种序列化方式：JDK自带的序列化、hessian2、JSON、Kryo、FST、Protostuff，ProtoBuf等等。</p>
+<p>Dubbo 默认使用的序列化方式是 hession2。</p>
+<h2 id="设计模式"><a href="#设计模式" class="headerlink" title="设计模式"></a>设计模式</h2><h3 id="Dubbo-用到哪些设计模式？"><a href="#Dubbo-用到哪些设计模式？" class="headerlink" title="Dubbo 用到哪些设计模式？"></a>Dubbo 用到哪些设计模式？</h3><p>Dubbo 框架在初始化和通信过程中使用了多种设计模式，可灵活控制类加载、权限控制等功能。</p>
+<p><strong>工厂模式</strong></p>
+<p>Provider 在 export 服务时，会调用 ServiceConfig 的 export 方法。这也是一种工厂模式，只是实现类的获取采用了 JDK SPI 的机制。这么实现的优点是可扩展性强，想要扩展实现，只需要在 classpath下增加个文件就可以了，代码零侵入。另外，像上面的 Adaptive 实现，可以做到调用时动态决定调用哪个实现，但是由于这种实现采用了动态代理，会造成代码调试比较麻烦，需要分析出实际调用的实现类。</p>
+<p><strong>装饰器模式</strong></p>
+<p>Dubbo 在启动和调用阶段都大量使用了装饰器模式。以 Provider 提供的调用链为例，具体的调用链代码是在 ProtocolFilterWrapper 的 buildInvokerChain 完成的，具体是将注解中含有 group=provider 的 Filter 实现，按照 order 排序，最后的调用顺序是：EchoFilter -&gt; ClassLoaderFilter -&gt; GenericFilter -&gt; ContextFilter -&gt;ExecuteLimitFilter -&gt; TraceFilter -&gt; TimeoutFilter -&gt; MonitorFilter -&gt;ExceptionFilter；更确切地说，这里是装饰器和责任链模式的混合使用。例如，EchoFilter 的作用是判断是否是回声测试请求，是的话直接返回内容，这是一种责任链的体现。而像ClassLoaderFilter 则只是在主功能上添加了功能，更改当前线程的 ClassLoader，这是典型的装饰器模式。</p>
+<p><strong>观察者模式</strong></p>
+<p>Dubbo 的 Provider 启动时，需要与注册中心交互，先注册自己的服务，再订阅自己的服务，订阅时，采用了观察者模式，开启一个 listener。注册中心会每 5 秒定时检查是否有服务更新，如果有更新，向该服务的提供者发送一个 notify 消息，provider 接受到 notify 消息后，运行 NotifyListener 的 notify 方法，执行监听器方法。</p>
+<p><strong>动态代理模式</strong></p>
+<p>Dubbo 扩展 JDK SPI 的类 ExtensionLoader 的 Adaptive 实现是典型的动态代理实现。Dubbo 需要灵活地控制实现类，即在调用阶段动态地根据参数决定调用哪个实现类，所以采用先生成代理类的方法，能够做到灵活的调用。生成代理类的代码是 ExtensionLoader 的 createAdaptiveExtensionClassCode 方法。代理类主要逻辑是，获取 URL 参数中指定参数的值作为获取实现类的 key。</p>
+<h2 id="运维管理"><a href="#运维管理" class="headerlink" title="运维管理"></a>运维管理</h2><h3 id="服务上线怎么兼容旧版本？"><a href="#服务上线怎么兼容旧版本？" class="headerlink" title="服务上线怎么兼容旧版本？"></a>服务上线怎么兼容旧版本？</h3><p>可以用版本号（version）过渡，多个不同版本的服务注册到注册中心，版本号不同的服务相互间不引用。这个和服务分组的概念有一点类似。</p>
+<h3 id="Dubbo-telnet-命令能做什么？"><a href="#Dubbo-telnet-命令能做什么？" class="headerlink" title="Dubbo telnet 命令能做什么？"></a>Dubbo telnet 命令能做什么？</h3><p>dubbo 服务发布之后，我们可以利用 telnet 命令进行调试、管理。Dubbo2.0.5 以上版本服务提供端口支持 telnet 命令。</p>
+<h3 id="Dubbo-支持服务降级吗？"><a href="#Dubbo-支持服务降级吗？" class="headerlink" title="Dubbo 支持服务降级吗？"></a>Dubbo 支持服务降级吗？</h3><p>通过 dubbo:reference 中设置 mock=“return null”。mock 的值也可以修改为 true，然后再跟接口同一个路径下实现一个 Mock 类，命名规则是 “接口名称+Mock” 后缀，然后在 Mock 类里实现自己的降级逻辑。</p>
+<h3 id="Dubbo-如何优雅停机？"><a href="#Dubbo-如何优雅停机？" class="headerlink" title="Dubbo 如何优雅停机？"></a>Dubbo 如何优雅停机？</h3><p>Dubbo 是通过 JDK 的 ShutdownHook 来完成优雅停机的，所以如果使用kill -9 PID 等强制关闭指令，是不会执行优雅停机的，只有通过 kill PID 时，才会执行。</p>
+<h2 id="SPI"><a href="#SPI" class="headerlink" title="SPI"></a>SPI</h2><h3 id="Dubbo-SPI-和-Java-SPI-区别？"><a href="#Dubbo-SPI-和-Java-SPI-区别？" class="headerlink" title="Dubbo SPI 和 Java SPI 区别？"></a>Dubbo SPI 和 Java SPI 区别？</h3><p><strong>JDK SPI：</strong>JDK 标准的 SPI 会一次性加载所有的扩展实现，如果有的扩展很耗时，但也没用上，很浪费资源。所以只希望加载某个的实现，就不现实了。</p>
+<p><strong>DUBBO SPI：</strong>对 Dubbo 进行扩展，不需要改动 Dubbo 的源码；延迟加载，可以一次只加载自己想要加载的扩展实现；增加了对扩展点 IOC 和 AOP 的支持，一个扩展点可以直接 setter 注入其它扩展点；Dubbo 的扩展机制能很好的支持第三方 IOC 容器，默认支持 Spring Bean。</p>
+<h3 id="Dubbo-的-SPI-机制了解么？-如何扩展-Dubbo-中的默认实现？"><a href="#Dubbo-的-SPI-机制了解么？-如何扩展-Dubbo-中的默认实现？" class="headerlink" title="Dubbo 的 SPI 机制了解么？ 如何扩展 Dubbo 中的默认实现？"></a>Dubbo 的 SPI 机制了解么？ 如何扩展 Dubbo 中的默认实现？</h3><p>SPI（Service Provider Interface） 机制被大量用在开源项目中，它可以帮助我们动态寻找服务/功能（比如负载均衡策略）的实现。</p>
+<p>SPI 的具体原理是这样的：将接口的实现类放在配置文件中，我们在程序运行过程中读取配置文件，通过反射加载实现类。这样，可以在运行的时候，动态替换接口的实现类。和 IOC 的解耦思想是类似的。</p>
+<p>Java 本身就提供了 SPI 机制的实现。不过，Dubbo 没有直接用，而是对 Java原生的 SPI机制进行了增强，以便更好满足自己的需求。</p>
+<p><strong>如何扩展 Dubbo 中的默认实现呢？</strong></p>
+<p>比如说我们想要实现自己的负载均衡策略，我们创建对应的实现类 XxxLoadBalance实现 LoadBalance接口或者 AbstractLoadBalance类。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> com.xxx;</span><br><span class="line"> </span><br><span class="line"><span class="keyword">import</span> org.apache.dubbo.rpc.cluster.LoadBalance;</span><br><span class="line"><span class="keyword">import</span> org.apache.dubbo.rpc.Invoker;</span><br><span class="line"><span class="keyword">import</span> org.apache.dubbo.rpc.Invocation;</span><br><span class="line"><span class="keyword">import</span> org.apache.dubbo.rpc.RpcException; </span><br><span class="line"> </span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">XxxLoadBalance</span> <span class="keyword">implements</span> <span class="title">LoadBalance</span> </span>&#123;</span><br><span class="line">    <span class="keyword">public</span> &lt;T&gt; <span class="function">Invoker&lt;T&gt; <span class="title">select</span><span class="params">(List&lt;Invoker&lt;T&gt;&gt; invokers, Invocation invocation)</span> <span class="keyword">throws</span> RpcException </span>&#123;</span><br><span class="line">        <span class="comment">// ...</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>将这个是实现类的路径写入到<code>resources</code> 目录下的 <code>META-INF/dubbo/org.apache.dubbo.rpc.cluster.LoadBalance</code>文件中即可。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">src</span><br><span class="line"> |-main</span><br><span class="line">    |-java</span><br><span class="line">        |-com</span><br><span class="line">            |-xxx</span><br><span class="line">                |-XxxLoadBalance.java (实现LoadBalance接口)</span><br><span class="line">    |-resources</span><br><span class="line">        |-META-INF</span><br><span class="line">            |-dubbo</span><br><span class="line">                |-org.apache.dubbo.rpc.cluster.LoadBalance (纯文本文件，内容为：xxx=com.xxx.XxxLoadBalance)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">org.apache.dubbo.rpc.cluster.LoadBalance</span><br><span class="line">xxx=com.xxx.XxxLoadBalance</span><br></pre></td></tr></table></figure>
+
+<h2 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h2><h3 id="Dubbo-支持分布式事务吗？"><a href="#Dubbo-支持分布式事务吗？" class="headerlink" title="Dubbo 支持分布式事务吗？"></a>Dubbo 支持分布式事务吗？</h3><p>目前暂时不支持，可与通过 tcc-transaction 框架实现，tcc-transaction 是开源的 TCC 补偿性分布式事务框架，TCC-Transaction 通过 Dubbo 隐式传参的功能，避免自己对业务代码的入侵。</p>
+<h3 id="Dubbo-可以对结果进行缓存吗？"><a href="#Dubbo-可以对结果进行缓存吗？" class="headerlink" title="Dubbo 可以对结果进行缓存吗？"></a>Dubbo 可以对结果进行缓存吗？</h3><p>为了提高数据访问的速度，Dubbo 提供了声明式缓存，以减少用户加缓存的工作量&lt;dubbo:reference cache=“true” /&gt;，其实比普通的配置文件就多了一个标签 cache=“true”。</p>
+<h3 id="Dubbo-支持哪些序列化方式？"><a href="#Dubbo-支持哪些序列化方式？" class="headerlink" title="Dubbo 支持哪些序列化方式？"></a>Dubbo 支持哪些序列化方式？</h3><p>默认使用 Hessian 序列化，还有 Duddo、FastJson、Java 自带序列化。</p>
+<h3 id="Dubbo-在安全方面有哪些措施？"><a href="#Dubbo-在安全方面有哪些措施？" class="headerlink" title="Dubbo 在安全方面有哪些措施？"></a>Dubbo 在安全方面有哪些措施？</h3><p>Dubbo 通过 Token 令牌防止用户绕过注册中心直连，然后在注册中心上管理授权。Dubbo 还提供服务黑白名单，来控制服务所允许的调用方。</p>
+<h3 id="服务调用是阻塞的吗？"><a href="#服务调用是阻塞的吗？" class="headerlink" title="服务调用是阻塞的吗？"></a>服务调用是阻塞的吗？</h3><p>默认是阻塞的，可以异步调用，没有返回值的可以这么做。Dubbo 是基于 NIO 的非阻塞实现并行调用，客户端不需要启动多线程即可完成并行调用多个远程服务，相对多线程开销较小，异步调用会返回一个 Future 对象。</p>
+<h3 id="服务提供者能实现失效踢出是什么原理？"><a href="#服务提供者能实现失效踢出是什么原理？" class="headerlink" title="服务提供者能实现失效踢出是什么原理？"></a>服务提供者能实现失效踢出是什么原理？</h3><p>服务失效踢出基于 zookeeper 的临时节点原理。</p>
+<h3 id="同一个服务多个注册的情况下可以直连某一个服务吗？"><a href="#同一个服务多个注册的情况下可以直连某一个服务吗？" class="headerlink" title="同一个服务多个注册的情况下可以直连某一个服务吗？"></a>同一个服务多个注册的情况下可以直连某一个服务吗？</h3><p>可以点对点直连，修改配置即可，也可以通过 telnet 直接某个服务。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="mailto:undefined">zhangc233</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://zhangc233.github.io/2021/08/18/Dubbo/">https://zhangc233.github.io/2021/08/18/Dubbo/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://zhangc233.github.io" target="_blank">ZC的学习录</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1/">架构设计</a><a class="post-meta__tags" href="/tags/%E6%B3%A8%E5%86%8C%E4%B8%AD%E5%BF%83/">注册中心</a><a class="post-meta__tags" href="/tags/%E5%8D%8F%E8%AE%AE/">协议</a></div><div class="post_share"><div class="social-share" data-image="https://cdn.jsdelivr.net/gh/zhangc233/pic@master/img/Dubbo.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/social-share.js/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button button--animated"><i class="fas fa-qrcode"></i> 打赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="/img/wechat.png" target="_blank"><img class="post-qr-code-img" src="/img/wechat.png" alt="微信"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="/img/alipay.png" target="_blank"><img class="post-qr-code-img" src="/img/alipay.png" alt="支付宝"/></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2021/08/26/Spring-Cloud/"><img class="prev-cover" src="https://cdn.jsdelivr.net/gh/zhangc233/pic@master/img/image-20210903120809706.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">Spring Cloud</div></div></a></div><div class="next-post pull-right"><a href="/2021/08/11/%E8%83%8C%E5%8C%85%E9%97%AE%E9%A2%98/"><img class="next-cover" src="https://cdn.jsdelivr.net/gh/zhangc233/pic@master/img/bag.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">动态规划之背包问题</div></div></a></div></nav><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="twikoo-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86"><span class="toc-number">1.</span> <span class="toc-text">基础知识</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#RPC%E6%98%AF%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="toc-number">1.1.</span> <span class="toc-text">RPC是什么？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#RPC-%E7%9A%84%E5%8E%9F%E7%90%86%E6%98%AF%E4%BB%80%E4%B9%88"><span class="toc-number">1.2.</span> <span class="toc-text">RPC 的原理是什么?</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Dubbo-%E6%98%AF%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="toc-number">1.3.</span> <span class="toc-text">Dubbo 是什么？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E7%94%A8-Dubbo%EF%BC%9F"><span class="toc-number">1.4.</span> <span class="toc-text">为什么要用 Dubbo？</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1"><span class="toc-number">2.</span> <span class="toc-text">架构设计</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Dubbo-%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6%E6%9C%89%E5%93%AA%E4%BA%9B%EF%BC%9F"><span class="toc-number">2.1.</span> <span class="toc-text">Dubbo 核心组件有哪些？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Dubbo-%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%B3%A8%E5%86%8C%E4%B8%8E%E5%8F%91%E7%8E%B0%E7%9A%84%E6%B5%81%E7%A8%8B"><span class="toc-number">2.2.</span> <span class="toc-text">Dubbo 服务器注册与发现的流程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Dubbo-%E7%9A%84%E6%95%B4%E4%BD%93%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E6%9C%89%E5%93%AA%E4%BA%9B%E5%88%86%E5%B1%82"><span class="toc-number">2.3.</span> <span class="toc-text">Dubbo 的整体架构设计有哪些分层?</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Dubbo-%E4%B8%AD%E7%9A%84-Invoker-%E6%A6%82%E5%BF%B5%E4%BA%86%E8%A7%A3%E4%B9%88%EF%BC%9F"><span class="toc-number">2.4.</span> <span class="toc-text">Dubbo 中的 Invoker 概念了解么？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Dubbo-Monitor-%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%EF%BC%9F"><span class="toc-number">2.5.</span> <span class="toc-text">Dubbo Monitor 实现原理？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Dubbo%E6%8F%90%E4%BE%9B%E7%9A%84%E7%BA%BF%E7%A8%8B%E6%A8%A1%E5%9E%8B"><span class="toc-number">2.6.</span> <span class="toc-text">Dubbo提供的线程模型</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9C%8D%E5%8A%A1%E6%8F%90%E4%BE%9B%E6%96%B9%E5%AE%9E%E7%8E%B0%E7%B1%BB%E5%88%B0Invoker%E7%9A%84%E8%BD%AC%E6%8D%A2"><span class="toc-number">2.7.</span> <span class="toc-text">服务提供方实现类到Invoker的转换</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9C%8D%E5%8A%A1%E6%8F%90%E4%BE%9B%E6%96%B9Invoker%E5%88%B0Exporter%E7%9A%84%E8%BD%AC%E6%8D%A2"><span class="toc-number">2.8.</span> <span class="toc-text">服务提供方Invoker到Exporter的转换</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9C%8D%E5%8A%A1%E6%B6%88%E8%B4%B9%E6%96%B9%E8%BF%9C%E7%A8%8B%E6%9C%8D%E5%8A%A1%E5%88%B0Invoker%E7%9A%84%E8%BD%AC%E6%8D%A2"><span class="toc-number">2.9.</span> <span class="toc-text">服务消费方远程服务到Invoker的转换</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9C%8D%E5%8A%A1%E6%B6%88%E8%B4%B9%E6%96%B9Invoker%E5%88%B0%E5%AE%A2%E6%88%B7%E7%AB%AF%E6%8E%A5%E5%8F%A3%E7%9A%84%E8%BD%AC%E6%8D%A2"><span class="toc-number">2.10.</span> <span class="toc-text">服务消费方Invoker到客户端接口的转换</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%86%E5%B8%83%E5%BC%8F%E6%A1%86%E6%9E%B6"><span class="toc-number">3.</span> <span class="toc-text">分布式框架</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Dubbo-%E7%B1%BB%E4%BC%BC%E7%9A%84%E5%88%86%E5%B8%83%E5%BC%8F%E6%A1%86%E6%9E%B6%E8%BF%98%E6%9C%89%E5%93%AA%E4%BA%9B%EF%BC%9F"><span class="toc-number">3.1.</span> <span class="toc-text">Dubbo 类似的分布式框架还有哪些？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Dubbo-%E5%92%8C-Spring-Cloud-%E6%9C%89%E4%BB%80%E4%B9%88%E5%85%B3%E7%B3%BB%EF%BC%9F"><span class="toc-number">3.2.</span> <span class="toc-text">Dubbo 和 Spring Cloud 有什么关系？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Dubbo-%E5%92%8C-Spring-Cloud-%E6%9C%89%E4%BB%80%E4%B9%88%E5%93%AA%E4%BA%9B%E5%8C%BA%E5%88%AB%EF%BC%9F"><span class="toc-number">3.3.</span> <span class="toc-text">Dubbo 和 Spring Cloud 有什么哪些区别？</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B3%A8%E5%86%8C%E4%B8%AD%E5%BF%83"><span class="toc-number">4.</span> <span class="toc-text">注册中心</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Dubbo-%E6%9C%89%E5%93%AA%E4%BA%9B%E6%B3%A8%E5%86%8C%E4%B8%AD%E5%BF%83%EF%BC%9F"><span class="toc-number">4.1.</span> <span class="toc-text">Dubbo 有哪些注册中心？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Dubbo-%E7%9A%84%E6%B3%A8%E5%86%8C%E4%B8%AD%E5%BF%83%E9%9B%86%E7%BE%A4%E6%8C%82%E6%8E%89%EF%BC%8C%E5%8F%91%E5%B8%83%E8%80%85%E5%92%8C%E8%AE%A2%E9%98%85%E8%80%85%E4%B9%8B%E9%97%B4%E8%BF%98%E8%83%BD%E9%80%9A%E4%BF%A1%E4%B9%88%EF%BC%9F"><span class="toc-number">4.2.</span> <span class="toc-text">Dubbo 的注册中心集群挂掉，发布者和订阅者之间还能通信么？</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%9B%86%E7%BE%A4"><span class="toc-number">5.</span> <span class="toc-text">集群</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Dubbo%E9%9B%86%E7%BE%A4%E6%8F%90%E4%BE%9B%E4%BA%86%E5%93%AA%E4%BA%9B%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E7%AD%96%E7%95%A5%EF%BC%9F"><span class="toc-number">5.1.</span> <span class="toc-text">Dubbo集群提供了哪些负载均衡策略？</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#RandomLoadBalance"><span class="toc-number">5.1.1.</span> <span class="toc-text">RandomLoadBalance</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#LeastActiveLoadBalance"><span class="toc-number">5.1.2.</span> <span class="toc-text">LeastActiveLoadBalance</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#ConsistentHashLoadBalance"><span class="toc-number">5.1.3.</span> <span class="toc-text">ConsistentHashLoadBalance</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#RoundRobinLoadBalance"><span class="toc-number">5.1.4.</span> <span class="toc-text">RoundRobinLoadBalance</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Dubbo%E7%9A%84%E9%9B%86%E7%BE%A4%E5%AE%B9%E9%94%99%E6%96%B9%E6%A1%88%E6%9C%89%E5%93%AA%E4%BA%9B%EF%BC%9F"><span class="toc-number">5.2.</span> <span class="toc-text">Dubbo的集群容错方案有哪些？</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%85%8D%E7%BD%AE"><span class="toc-number">6.</span> <span class="toc-text">配置</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Dubbo-%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6%E6%98%AF%E5%A6%82%E4%BD%95%E5%8A%A0%E8%BD%BD%E5%88%B0-Spring-%E4%B8%AD%E7%9A%84%EF%BC%9F"><span class="toc-number">6.1.</span> <span class="toc-text">Dubbo 配置文件是如何加载到 Spring 中的？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AF%B4%E8%AF%B4%E6%A0%B8%E5%BF%83%E7%9A%84%E9%85%8D%E7%BD%AE%E6%9C%89%E5%93%AA%E4%BA%9B%EF%BC%9F"><span class="toc-number">6.2.</span> <span class="toc-text">说说核心的配置有哪些？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Dubbo-%E8%B6%85%E6%97%B6%E8%AE%BE%E7%BD%AE%E6%9C%89%E5%93%AA%E4%BA%9B%E6%96%B9%E5%BC%8F%EF%BC%9F"><span class="toc-number">6.3.</span> <span class="toc-text">Dubbo 超时设置有哪些方式？</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%8F%E8%AE%AE"><span class="toc-number">7.</span> <span class="toc-text">协议</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Dubbo-%E4%BD%BF%E7%94%A8%E7%9A%84%E6%98%AF%E4%BB%80%E4%B9%88%E9%80%9A%E4%BF%A1%E6%A1%86%E6%9E%B6"><span class="toc-number">7.1.</span> <span class="toc-text">Dubbo 使用的是什么通信框架?</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Dubbo-%E6%94%AF%E6%8C%81%E5%93%AA%E4%BA%9B%E9%80%9A%E4%BF%A1%E5%8D%8F%E8%AE%AE%EF%BC%8C%E5%AE%83%E4%BB%AC%E7%9A%84%E4%BC%98%E7%BC%BA%E7%82%B9%E6%9C%89%E5%93%AA%E4%BA%9B%EF%BC%9F"><span class="toc-number">7.2.</span> <span class="toc-text">Dubbo 支持哪些通信协议，它们的优缺点有哪些？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Dubbo-%E6%94%AF%E6%8C%81%E5%93%AA%E4%BA%9B%E5%BA%8F%E5%88%97%E5%8C%96%E6%96%B9%E5%BC%8F%E5%91%A2%EF%BC%9F"><span class="toc-number">7.3.</span> <span class="toc-text">Dubbo 支持哪些序列化方式呢？</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F"><span class="toc-number">8.</span> <span class="toc-text">设计模式</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Dubbo-%E7%94%A8%E5%88%B0%E5%93%AA%E4%BA%9B%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%EF%BC%9F"><span class="toc-number">8.1.</span> <span class="toc-text">Dubbo 用到哪些设计模式？</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%90%E7%BB%B4%E7%AE%A1%E7%90%86"><span class="toc-number">9.</span> <span class="toc-text">运维管理</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9C%8D%E5%8A%A1%E4%B8%8A%E7%BA%BF%E6%80%8E%E4%B9%88%E5%85%BC%E5%AE%B9%E6%97%A7%E7%89%88%E6%9C%AC%EF%BC%9F"><span class="toc-number">9.1.</span> <span class="toc-text">服务上线怎么兼容旧版本？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Dubbo-telnet-%E5%91%BD%E4%BB%A4%E8%83%BD%E5%81%9A%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="toc-number">9.2.</span> <span class="toc-text">Dubbo telnet 命令能做什么？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Dubbo-%E6%94%AF%E6%8C%81%E6%9C%8D%E5%8A%A1%E9%99%8D%E7%BA%A7%E5%90%97%EF%BC%9F"><span class="toc-number">9.3.</span> <span class="toc-text">Dubbo 支持服务降级吗？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Dubbo-%E5%A6%82%E4%BD%95%E4%BC%98%E9%9B%85%E5%81%9C%E6%9C%BA%EF%BC%9F"><span class="toc-number">9.4.</span> <span class="toc-text">Dubbo 如何优雅停机？</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SPI"><span class="toc-number">10.</span> <span class="toc-text">SPI</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Dubbo-SPI-%E5%92%8C-Java-SPI-%E5%8C%BA%E5%88%AB%EF%BC%9F"><span class="toc-number">10.1.</span> <span class="toc-text">Dubbo SPI 和 Java SPI 区别？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Dubbo-%E7%9A%84-SPI-%E6%9C%BA%E5%88%B6%E4%BA%86%E8%A7%A3%E4%B9%88%EF%BC%9F-%E5%A6%82%E4%BD%95%E6%89%A9%E5%B1%95-Dubbo-%E4%B8%AD%E7%9A%84%E9%BB%98%E8%AE%A4%E5%AE%9E%E7%8E%B0%EF%BC%9F"><span class="toc-number">10.2.</span> <span class="toc-text">Dubbo 的 SPI 机制了解么？ 如何扩展 Dubbo 中的默认实现？</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%B6%E4%BB%96"><span class="toc-number">11.</span> <span class="toc-text">其他</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Dubbo-%E6%94%AF%E6%8C%81%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E5%90%97%EF%BC%9F"><span class="toc-number">11.1.</span> <span class="toc-text">Dubbo 支持分布式事务吗？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Dubbo-%E5%8F%AF%E4%BB%A5%E5%AF%B9%E7%BB%93%E6%9E%9C%E8%BF%9B%E8%A1%8C%E7%BC%93%E5%AD%98%E5%90%97%EF%BC%9F"><span class="toc-number">11.2.</span> <span class="toc-text">Dubbo 可以对结果进行缓存吗？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Dubbo-%E6%94%AF%E6%8C%81%E5%93%AA%E4%BA%9B%E5%BA%8F%E5%88%97%E5%8C%96%E6%96%B9%E5%BC%8F%EF%BC%9F"><span class="toc-number">11.3.</span> <span class="toc-text">Dubbo 支持哪些序列化方式？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Dubbo-%E5%9C%A8%E5%AE%89%E5%85%A8%E6%96%B9%E9%9D%A2%E6%9C%89%E5%93%AA%E4%BA%9B%E6%8E%AA%E6%96%BD%EF%BC%9F"><span class="toc-number">11.4.</span> <span class="toc-text">Dubbo 在安全方面有哪些措施？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9C%8D%E5%8A%A1%E8%B0%83%E7%94%A8%E6%98%AF%E9%98%BB%E5%A1%9E%E7%9A%84%E5%90%97%EF%BC%9F"><span class="toc-number">11.5.</span> <span class="toc-text">服务调用是阻塞的吗？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9C%8D%E5%8A%A1%E6%8F%90%E4%BE%9B%E8%80%85%E8%83%BD%E5%AE%9E%E7%8E%B0%E5%A4%B1%E6%95%88%E8%B8%A2%E5%87%BA%E6%98%AF%E4%BB%80%E4%B9%88%E5%8E%9F%E7%90%86%EF%BC%9F"><span class="toc-number">11.6.</span> <span class="toc-text">服务提供者能实现失效踢出是什么原理？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%90%8C%E4%B8%80%E4%B8%AA%E6%9C%8D%E5%8A%A1%E5%A4%9A%E4%B8%AA%E6%B3%A8%E5%86%8C%E7%9A%84%E6%83%85%E5%86%B5%E4%B8%8B%E5%8F%AF%E4%BB%A5%E7%9B%B4%E8%BF%9E%E6%9F%90%E4%B8%80%E4%B8%AA%E6%9C%8D%E5%8A%A1%E5%90%97%EF%BC%9F"><span class="toc-number">11.7.</span> <span class="toc-text">同一个服务多个注册的情况下可以直连某一个服务吗？</span></a></li></ol></li></ol></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2021 <i style="color:#FF6A6A;animation: announ_animation 0.8s linear infinite;" class="fa fa-heartbeat"></i> zhangc233</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div><div class="footer_custom_text">Hi, welcome to my blog!</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="font-plus" type="button" title="放大字体"><i class="fas fa-plus"></i></button><button id="font-minus" type="button" title="缩小字体"><i class="fas fa-minus"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="chat_btn" type="button" title="rightside.chat_btn"><i class="fas fa-sms"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div id="local-search"><div class="search-dialog"><div class="search-dialog__title" id="local-search-title">本地搜索</div><div id="local-input-panel"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div></div><hr/><div id="local-search-results"></div><span class="search-close-button"><i class="fas fa-times"></i></span></div><div id="search-mask"></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><script>function panguFn () {
+  if (typeof pangu === 'object') pangu.autoSpacingPage()
+  else {
+    getScript('https://cdn.jsdelivr.net/npm/pangu/dist/browser/pangu.min.js')
+      .then(() => {
+        pangu.autoSpacingPage()
+      })
+  }
+}
+
+function panguInit () {
+  if (true){
+    GLOBAL_CONFIG_SITE.isPost && panguFn()
+  } else {
+    panguFn()
+  }
+}
+
+document.addEventListener('DOMContentLoaded', panguInit)</script><script src="/js/search/local-search.js"></script><script>var preloader = {
+  endLoading: () => {
+    document.body.style.overflow = 'auto';
+    document.getElementById('loading-box').classList.add("loaded")
+  },
+  initLoading: () => {
+    document.body.style.overflow = '';
+    document.getElementById('loading-box').classList.remove("loaded")
+
+  }
+}
+window.addEventListener('load',preloader.endLoading())</script><div class="js-pjax"><script>(()=>{
+  const $countDom = document.getElementById('twikoo-count')
+  const init = () => {
+    let initData = {
+      el: '#twikoo-wrap',
+      envId: 'zc-cloudbase-7gbysfm74e2b2c22',
+      region: ''
+    }
+
+    if (false) {
+      const otherData = false
+      initData = Object.assign(initData, otherData)
+    }
+    
+    twikoo.init(initData)
+  }
+
+  const getCount = () => {
+    twikoo.getCommentsCount({
+      envId: 'zc-cloudbase-7gbysfm74e2b2c22',
+      region: '',
+      urls: [window.location.pathname],
+      includeReply: false
+    }).then(function (res) {
+      $countDom.innerText = res[0].count
+    }).catch(function (err) {
+      console.error(err);
+    });
+  }
+
+  const loadTwikoo = (bool = false) => {
+    if (typeof twikoo === 'object') {
+      init()
+      bool && $countDom && setTimeout(getCount,0)
+    } else {
+      getScript('https://cdn.jsdelivr.net/npm/twikoo/dist/twikoo.all.min.js').then(()=> {
+        init()
+        bool && $countDom && setTimeout(getCount,0)
+      })
+    }
+  }
+
+  if ('Twikoo' === 'Twikoo' || !false) {
+    if (false) btf.loadComment(document.getElementById('twikoo-wrap'), loadTwikoo)
+    else loadTwikoo(true)
+  } else {
+    window.loadOtherComment = () => {
+      loadTwikoo()
+    }
+  }
+})()</script></div><script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script><script src="https://cdn.jsdelivr.net/npm/vue@2.6.11"></script><script src="https://cdn.jsdelivr.net/gh/yremp/yremp-js@1.5/sakura.js"></script><script src="/js/title.js"></script><script src="/js/botui.js"></script><script data-pjax src="/js/botui_init.js"></script><script async src="/js/back.js"></script><script type="text/javascript" id="clstr_globe" src="//clustrmaps.com/globe.js?d=5V2tOKp8qAdRM-i8eu7ETTO9ugt5uKbbG-U7Yj8uMl8"></script><div class="aplayer no-destroy" data-id="000PeZCQ1i4XVs" data-server="tencent" data-type="artist" data-fixed="true" data-mini="true" data-listFolded="false" data-order="random" data-preload="none" data-autoplay="true" muted></div><script src="/js/chatra.js"></script><canvas class="fireworks" mobile="false"></canvas><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/dist/fireworks.min.js"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/dist/activate-power-mode.min.js"></script><script>POWERMODE.colorful = true;
+POWERMODE.shake = true;
+POWERMODE.mobile = false;
+document.body.addEventListener('input', POWERMODE);
+</script><script>(function(d, w, c) {
+    w.ChatraID = 'bJrdHqZM78fLH3i3H';
+    var s = d.createElement('script');
+    w[c] = w[c] || function() {
+        (w[c].q = w[c].q || []).push(arguments);
+    };
+    s.async = true;
+    s.src = 'https://call.chatra.io/chatra.js';
+    if (d.head) d.head.appendChild(s);
+})(document, window, 'Chatra');
+
+if (true) {
+  var chatBtnFn = () => {
+    var chatBtn = document.getElementById("chat_btn")
+    chatBtn.addEventListener("click", function(){
+      Chatra('openChat')
+    });
+  }
+  chatBtnFn()
+} else {
+  if (true) {
+    function chatBtnHide () {
+      Chatra('hide')
+    }
+    function chatBtnShow () {
+      Chatra('show')
+    }
+  }
+}</script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js"></script><script src="https://cdn.jsdelivr.net/gh/metowolf/MetingJS@1.2/dist/Meting.min.js"></script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = [
+  'title',
+  '#config-diff',
+  '#body-wrap',
+  '#rightside-config-hide',
+  '#rightside-config-show',
+  '.js-pjax'
+]
+
+if (false) {
+  pjaxSelectors.unshift('meta[property="og:image"]', 'meta[property="og:title"]', 'meta[property="og:url"]')
+}
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof chatBtnFn === 'function' && chatBtnFn()
+  typeof panguInit === 'function' && panguInit()
+
+  if (typeof gtag === 'function') {
+    gtag('config', '', {'page_path': window.location.pathname});
+  }
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // Analytics
+  if (false) {
+    MtaH5.pgv()
+  }
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+
+  typeof preloader === 'object' && preloader.endLoading()
+})
+
+
+document.addEventListener('pjax:send', function () {
+  typeof preloader === 'object' && preloader.initLoading()
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+})
+
+document.addEventListener('pjax:error', (e) => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div><script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"tagMode":false,"debug":false,"model":{"jsonPath":"/live2dw/assets/shizuku.model.json"},"display":{"position":"right","width":150,"height":300,"hOffset":20,"vOffset":-20},"mobile":{"show":false},"log":false,"pluginJsPath":"lib/","pluginModelPath":"assets/","pluginRootPath":"live2dw/"});</script></body></html>
